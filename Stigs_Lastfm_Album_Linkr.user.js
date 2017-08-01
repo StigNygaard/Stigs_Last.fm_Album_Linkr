@@ -1,0 +1,311 @@
+﻿// ==UserScript==
+// @name        Stig's Last.fm Album Linkr
+// @namespace   dk.rockland.userscript.lastfm.linkr
+// @description Adding album links and headers to tracks on Last.Fm's recent plays listings - plus linkifying About Me section on profiles
+// @version     2017.08.01.0
+// @author      Stig Nygaard, http://www.rockland.dk
+// @homepageURL http://www.rockland.dk/userscript/lastfm/linkr/
+// @supportURL  http://www.rockland.dk/userscript/lastfm/linkr/
+// @match       *://*.last.fm/*
+// @match       *://*.lastfm.de/*
+// @match       *://*.lastfm.es/*
+// @match       *://*.lastfm.fr/*
+// @match       *://*.lastfm.it/*
+// @match       *://*.lastfm.ja/*
+// @match       *://*.lastfm.pl/*
+// @match       *://*.lastfm.pt/*
+// @match       *://*.lastfm.ru/*
+// @match       *://*.lastfm.sv/*
+// @match       *://*.lastfm.tr/*
+// @match       *://*.lastfm.zh/*
+// @grant       GM_registerMenuCommand
+// @grant       GM_getValue
+// @grant       GM_setValue
+// @noframes
+// ==/UserScript==
+
+
+var linkr = linkr || {
+    // CHANGELOG - The most important updates/versions:
+    changelog: [
+        {version: '2017.08.01.0', description: "Just moving source to GitHub repository."},
+        {version: '2017.06.25.0', description: "Tapmusic collage fix."},
+        {version: '2017.04.22.0', description: "Adapting to site changes."},
+        {version: '2017.04.16.0', description: "Minor cosmetic optimizations."},
+        {version: '2017.04.03.0', description: "Code tuning. Now also compatible with Microsoft Edge using Tampermonkey!"},
+        {version: '2017.03.01.0', description: "Found a work-around to keep tapmusic collages working on secure https last.fm pages (https://carlo.zottmann.org/posts/2013/04/14/google-image-resizer.html)."},
+        {version: '2017.02.28.0', description: "Fix for loading album-icon on secure (https) last.fm pages."},
+        {version: '2016.11.05.3', description: "Another bonus-feature added: Optionally embed album collage from http://www.tapmusic.net/lastfm on user's profiles (Enable it via menu in the userscript browser extension)."},
+        {version: '2016.11.05.0', description: 'Even more intelligent creation of album-links and headers when there are featured artists on some albumtracks.'},
+        {version: '2016.10.26.0', description: 'More intelligent creation of links in album-headers when there are featured artists on some albumtracks.'},
+        {version: '2016.10.19.0', description: 'Bonus-feature added: Linkifying URLs written in About Me section in Profiles.'},
+        {version: '2016.07.04.0', description: '1st release.'}
+    ],
+    INFO: true,
+    DEBUG: false,
+    observed: null,
+    linking_running: false,
+    collagetype: '',
+    collapseTop: false,
+    log: function(s, info) {
+        if ((info && window.console) || (linkr.DEBUG && window.console)) {
+            window.console.log('*Linkr* '+s);
+        }
+    },
+    insertStyle: function() {
+        if (!document.getElementById('linkrStyle')) {
+            var style = document.createElement('style');
+            style.type = 'text/css';
+            style.id = 'linkrStyle';
+            style.innerHTML = '#tapmusic {font-style:italic; font-size:12px; color:rgb(153,153,153)} .tapcollage {line-height:1.5; animation:fadein 15s; animation-timing-function:ease-in;} .tapcredit{line-height:1.3} @keyframes fadein {from{color:rgba(153,153,153,0);} to{color:rgba(153,153,153,1);}} ' +
+                              'tr.albumlink-row,  tr.albumlink-row > td {background-color:#f1cccc !important} tr.albumlink-row > td.chartlist-name {font-style:italic} tr.albumlink-row > td.chartlist-name > span > span {font-style:normal} tr.albumlink-row:hover, tr.albumlink-row:hover > td {background-color:#f9d4d4 !important;} ' +
+                              (linkr.collapseTop ? 'div[id^="gpt-slot-"] {display:none}' : '');
+            document.getElementsByTagName('head')[0].appendChild(style);
+            linkr.log('linkrStyle has been ADDED');
+        } else {
+            linkr.log('linkrStyle was already present');
+        }
+    },
+    loadSettings: function() {
+        linkr.collagetype = (''+GM_getValue('collagetype', '')); // tapmusic collage
+        linkr.collapseTop = ((''+GM_getValue('collapseTop', 'false'))==='true');
+    },
+    saveSettings: function() {
+        GM_setValue('collagetype', linkr.collagetype );
+        GM_setValue('collapseTop', ''+linkr.collapseTop );
+        location.reload(true);
+    },
+    collageOff: function() {
+        linkr.collagetype = '';
+        linkr.saveSettings();
+    },
+    collage7day: function() {
+        linkr.collagetype = '7day';
+        linkr.saveSettings();
+    },
+    collage1month: function() {
+        linkr.collagetype = '1month';
+        linkr.saveSettings();
+    },
+    collage3month: function() {
+        linkr.collagetype = '3month';
+        linkr.saveSettings();
+    },
+    collage6month: function() {
+        linkr.collagetype = '6month';
+        linkr.saveSettings();
+    },
+    collage12month: function() {
+        linkr.collagetype = '12month';
+        linkr.saveSettings();
+    },
+    collageOverall: function() {
+        linkr.collagetype = 'overall';
+        linkr.saveSettings();
+    },
+    toggleCollapseTop: function() {
+        linkr.collapseTop = !linkr.collapseTop;
+        linkr.saveSettings();
+    },
+    linking: function (mutations) {
+        if(linkr.linking_running) return;
+        linkr.linking_running = true;
+        function altvalue(elem) {
+            if (elem && elem.firstElementChild) {
+                if (elem.firstElementChild.classList.contains('albumlink-row')) {
+                    return null;
+                } else if (elem.firstElementChild.firstElementChild && elem.firstElementChild.firstElementChild.firstElementChild && elem.firstElementChild.firstElementChild.firstElementChild.firstElementChild) {
+                    return elem.firstElementChild.firstElementChild.firstElementChild.firstElementChild.alt;
+                }
+            }
+            return null;
+        }
+        function containing(s, sub) {
+            s = s.trim().replace(/^the\s/gi, "").replace(/\,\sthe$/gi,"").replace(" & ", " and ").trim();
+            sub = sub.trim().replace(/^the\s/gi, "").replace(/\,\sthe$/gi,"").replace(" & ", " and ").trim();
+            //if (s.toLocaleUpperCase().indexOf(sub.toLocaleUpperCase()) == -1) {alert('"'+s+'" does NOT include "'+sub+'"!')}
+            return (s.toLocaleUpperCase().indexOf(sub.toLocaleUpperCase()) > -1);
+        }
+        linkr.log('Running linking()... ', linkr.INFO);
+        var l = document.querySelectorAll('table.chartlist tr div > img');
+        var tr;
+        var albumlink;
+        for (var i=0; i < l.length; i++) {
+            linkr.log('iteration '+ i + ' of ' + l.length);
+            if (l[i].alt && l[i].alt!=='') {
+                l[i].title = l[i].alt;
+                var parent = l[i].parentNode;
+                tr = parent;
+                while (tr.tagName.toUpperCase()!=='TR') tr = tr.parentNode;
+                var a = tr.querySelector('span.chartlist-artists a');
+                if (a) {
+                    linkr.log('Found img.alt='+l[i].alt);
+                    albumlink = a.href + '/' + encodeURIComponent(l[i].alt).replace(/%20/g,'+') + '/';
+                    linkr.log('giving albumlink='+albumlink);
+                    var link = document.createElement('a');
+                    link.setAttribute('href', albumlink);
+                    parent.replaceChild(link, l[i]);
+                    link.appendChild(l[i]);
+                } else {
+                    linkr.log('Artist link not found');
+                }
+            }
+        }
+
+        var hasMorebuttons = !!document.querySelector('td.chartlist-more');
+        var tlists = document.querySelectorAll('section#recent-tracks-section table.chartlist tbody, section.tracklist-section tbody');
+        linkr.log('tlists.length='+tlists.length);
+        for (var j=0; j<tlists.length; j++) {
+            linkr.log('Loop with tlists['+j+'].');
+            if (tlists[j] && tlists[j].children && tlists[j].children.length > 2) {
+                linkr.log('tlists['+j+'] has ' + tlists[j].children.length + ' children');
+                var loopstart=1;
+                if (j===0 && tlists[j].children[0].classList.contains('now-scrobbling')) {
+                    loopstart=2; // Don't put album-header at very top of Recent Tracks if the 1st row is a currently scrobbling track
+                }
+                for (i = loopstart; i < tlists[j].children.length; i++) {
+                    linkr.log('for-loop. i=' + i);
+                    if (i===1 || !tlists[j].children[i - 2].classList.contains('albumlink-row')) {
+                        linkr.log('for-loop. i=' + i + ' og i-2 er IKKE allerede albumlink-row');
+                        if (    altvalue(tlists[j].children[i]) &&
+                                altvalue(tlists[j].children[i - 1]) &&
+                                altvalue(tlists[j].children[i]) !== '' &&
+                                altvalue(tlists[j].children[i]) === altvalue(tlists[j].children[i - 1]) &&
+                                (i===1 || altvalue(tlists[j].children[i]) !== altvalue(tlists[j].children[i - 2]))) {
+                            linkr.log('for-loop. i=' + i + ' og vi har fundet en album-gruppes start', linkr.INFO);
+                            // TRY to get albumartist right even when misc. featured artists on album tracks:
+                            var bestindex = i-1;
+                            var artistlinkelem = tlists[j].children[bestindex].querySelector('td.chartlist-name span.chartlist-artists > a');
+                            var albumcoverelem = tlists[j].children[bestindex].querySelector('td.chartlist-play a > img');
+                            var artistname = artistlinkelem.textContent;
+                            // var artistname = tlists[j].children[bestindex].querySelector('td.chartlist-name span.chartlist-artists > a').textContent;
+                            var tracks = [{absindex: bestindex, artistname: artistname, coverurl: (albumcoverelem ? albumcoverelem.src : null)}];
+                            for (var k=i; k < tlists[j].children.length; k++) {
+                                if (altvalue(tlists[j].children[i-1]) !== altvalue(tlists[j].children[k])) break; // new album
+                                artistlinkelem = tlists[j].children[k].querySelector('td.chartlist-name span.chartlist-artists > a');
+                                albumcoverelem = tlists[j].children[k].querySelector('td.chartlist-play a > img');
+                                tracks.push({absindex: k, artistname: artistlinkelem.textContent, coverurl: (albumcoverelem ? albumcoverelem.src : null)});
+                                if (tlists[j].children[k].querySelector('td.chartlist-name span.chartlist-artists > a').textContent.length < artistname.length) {
+                                    bestindex = k;
+                                    artistname = artistlinkelem.textContent;
+                                }
+                                // linkr.log('*** k='+k+': altvalue='+altvalue(tlists[j].children[k])+', artist='+ tlists[j].children[k].querySelector('td.chartlist-name span.chartlist-artists > a').textContent, true)
+                            }
+                            var artistlink = tlists[j].children[bestindex].querySelector('td.chartlist-name span.chartlist-artists > a');
+                            var albumtitle = altvalue(tlists[j].children[bestindex]);
+                            var albumcover = tlists[j].children[bestindex].querySelector('td.chartlist-play a > img');
+                            if (albumcover) albumcover=albumcover.src;
+                            if (artistlink) {
+                                if (tracks.reduce(function (x, y) {
+                                        return x && containing(y.artistname, artistname);
+                                    }, true)) { //y.artistname.indexOf(artistname)>-1
+                                    artistlink = artistlink.href;
+                                    linkr.log('*** [before split()]: All albumtracks on "' + albumtitle + '" has "' + artistname + '" contained in trackartists');
+                                } else {
+                                    artistname = artistname.split(',')[0];
+                                    artistlink = artistlink.href.split(',')[0];
+                                    if (tracks.reduce(function (x, y) {
+                                            return x && containing(y.artistname, artistname);
+                                        }, true)) {
+                                        linkr.log('*** [after split()]: All albumtracks on "' + albumtitle + '" has "' + artistname + '" contained in trackartists');
+                                    } else {
+                                        // Looks like we have a "Various Artists"...
+                                        artistname = 'Various Artists';
+                                        artistlink = 'http://www.last.fm/music/Various+Artists';
+                                        linkr.log('*** [far after split()]: Seems "' + albumtitle + '" is a "Various Artists" album...');
+                                    }
+                                }
+                                albumlink = artistlink + '/' + encodeURIComponent(altvalue(tlists[j].children[bestindex])).replace(/%20/g, '+') + '/';
+                                tr = document.createElement("tr");
+                                tr.classList.add('albumlink-row', 'js-link-block', 'js-focus-controls-container');                                                                                                                                                  // https://c1.staticflickr.com/3/2821/32308516104_dc32a69ba0_o.png // or http://www.rockland.dk/img/album244c.png // or https://images1-fcus-opensocial.googleusercontent.com/gadgets/proxy?url=http%3A%2F%2Fwww.rockland.dk%2Fimg%2Falbum244c.png&container=focus&resize_w=244&refresh=3600
+                                tr.innerHTML = '<td class="chartlist-play"><div class="chartlist-play-image"><a href="' + albumlink + '"><img title="' + albumtitle + '" src="' + albumcover + '" class="cover-art"></a></div></td><td class="chartlist-loved"><a href="' + albumlink.replace(/\/user\/[^\/]+\/library\//, '/') + '"><img src="https://images1-focus-opensocial.googleusercontent.com/gadgets/proxy?url=http%3A%2F%2Fwww.rockland.dk%2Fimg%2Falbum244c.png&container=focus&resize_w=24&refresh=50000" class="cover-art" alt="album" /></a></td><td class="chartlist-name"><span class="chartlist-ellipsis-wrap"><span class="chartlist-artists"><a href="' + artistlink + '" title="' + artistname + '">' + artistname + '</a></span><span class="artist-name-spacer"> — </span><a href="' + albumlink + '" class="link-block-target" title="' + artistname + ' — ' + albumtitle + '">' + albumtitle + '</a></span></td><td class="chartlist-buylinks chartlist-focus-control-cell"><div class="lazy-buylinks focus-control"><button class="disclose-trigger lazy-buylinks-toggle" aria-expanded="false" data-lazy-buylink="" data-lazy-buylink-url="' + albumlink.replace(/\/user\/[^\/]+\/library\//, '/') + '/+partial/buylinks">Buy</button></div></td>' + (hasMorebuttons ? '<td class="chartlist-more chartlist-focus-control-cell"><div class="focus-control"></div></td>' : '') + '<td class="chartlist-timestamp"></td>';
+                                linkr.log('Now trying to add tr...');
+                                tlists[j].insertBefore(tr, tlists[j].children[i - 1]);
+                                linkr.log('and should be added now!?');
+                                i += 2; // or http://stackoverflow.com/questions/8766910/is-there-a-loop-start-over ?
+                            }
+                        }
+                    }
+                }
+            } else {
+                linkr.log('but not enough children found...');
+            }
+        }
+
+        // extras here...
+        linkr.linkifySidebar();
+        linkr.tapmusicSidebar();
+        linkr.linking_running = false;
+    },
+    setupObserver: function () {
+        linkr.log('Running setupObserver()');
+        linkr.insertStyle();
+        linkr.observed = document.querySelector('table.chartlist > tbody');
+        if (!linkr.observed || !linkr.observed.classList) {
+            linkr.log('Object to observe NOT found - re-trying later...');
+        } else if (linkr.observed.classList.contains('hasObserver')) {
+            linkr.log('Everything is okay! - But checking again later...');
+        } else {
+            linkr.linking();
+            linkr.log('Now adding Observer and starting...', linkr.INFO);
+            var observer = new MutationObserver(linkr.linking);
+            var config = {attributes: false, childList: true, subtree: false, characterData: false};
+            observer.observe(linkr.observed, config);
+            linkr.observed.classList.add('hasObserver');
+            linkr.log('Observer added and running...');
+        }
+    },
+    linkifyStr: function (str, attributes) {
+        var a1 = '<a ' + (attributes ? attributes+' ' : '') + 'href="';
+        var a2 = '">';
+        var a3 = '</a>';
+        var url = /(^|\s|\(|>)([fhtpsr]+:\/\/[^\s]+?)([\.,;\]"]?(\s|$|\))|<)/igm;
+        // var url2 = /(^|\s|\()([fhtpsr]+:\/\/[^\s]+?)([\.,;\]"]?(\s|$|\)))/igm;
+        // This looks a bit weird, but we have to do a replace twice to catch URLs
+        // which immediately follow each other. This is because leading and trailing
+        // whitespaces are part of the expressions, and if a trailing whitespace of
+        // a match needs to be a leading whitespace of the next URL to match, it
+        // won't be caught.
+        var s = str.replace(url, '$1' + a1 + '$2' + a2 + '$2' + a3 + '$3$4');
+        return(s.replace(url, '$1' + a1 + '$2' + a2 + '$2' + a3 + '$3$4'));
+    },
+    linkifySidebar: function() {
+        var a = document.querySelectorAll('.about-me-sidebar p');
+        for(var i=0;i<a.length;i++)
+        {
+            a[i].innerHTML = linkr.linkifyStr(a[i].innerHTML);
+        }
+    },
+    tapmusicSidebar: function() {
+        if (linkr.collagetype) {
+            //  /user/userid
+            var pattern = /^\/user\/([^\/]+)/i;
+            var result = window.location.pathname.match(pattern);
+            if (result) {
+                linkr.log('tapmusicSidebar(): url match med userid=' + result[1]);
+                var b = document.querySelector('.stationlinks');
+                if (b && !document.getElementById('tapmusic')) {
+                    b.insertAdjacentHTML('beforeend', '<div style="margin:1em 0;width:300px" id="tapmusic"><div class="tapcollage"><img src="https://images1-focus-opensocial.googleusercontent.com/gadgets/proxy?url=http%3A%2F%2Fwww.tapmusic.net%2Fcollage.php%3Fuser%3D' + result[1] + '%26type%3D'+linkr.collagetype+'%26size%3D2x6&container=focus&resize_w=300&refresh=3600" alt="If this text is visible, tapmusic.net might be slow or not responding - or the profile you are looking at does not have recent scrobbles to generate a collage from... But sometimes a simple re-load of page also helps." style="display:block;margin:0;padding:0;width:300px;height:900px" /></div><div class="tapcredit"><em title="Album collage by www.tapmusic.net/lastfm - Embedded by Stig\'s Last.fm Album Linkr">Album collage by <a href="http://www.tapmusic.net/lastfm/">www.tapmusic.net/lastfm/</a></em></div></div>');
+                }
+            } else {
+                linkr.log('tapmusicSidebar(): returnerer false! reg-pattern fandt ikke match i pathname=' + window.location.pathname);
+            }
+        }
+    },
+    init: function () {
+        linkr.log('Running init() on last.fm');
+        linkr.loadSettings();
+        linkr.setupObserver();
+        setInterval(linkr.setupObserver,2000);
+        GM_registerMenuCommand((linkr.collagetype==='' ? ' ☑ ' : ' ☐ ')+"Album Collages - Disabled", linkr.collageOff, "D");
+        GM_registerMenuCommand((linkr.collagetype==='7day' ? ' ☑ ' : ' ☐ ')+"Album Collages - 7 Days", linkr.collage7day, "7");
+        GM_registerMenuCommand((linkr.collagetype==='1month' ? ' ☑ ' : ' ☐ ')+"Album Collages - 1 Month", linkr.collage1month, "1");
+        GM_registerMenuCommand((linkr.collagetype==='3month' ? ' ☑ ' : ' ☐ ')+"Album Collages - 3 Months", linkr.collage3month, "3");
+        GM_registerMenuCommand((linkr.collagetype==='6month' ? ' ☑ ' : ' ☐ ')+"Album Collages - 6 Months", linkr.collage6month, "6");
+        GM_registerMenuCommand((linkr.collagetype==='12month' ? ' ☑ ' : ' ☐ ')+"Album Collages - 1 Year", linkr.collage12month, "Y");
+        GM_registerMenuCommand((linkr.collagetype==='overall' ? ' ☑ ' : ' ☐ ')+"Album Collages - Overall", linkr.collageOverall, "O");
+        GM_registerMenuCommand((linkr.collapseTop===true ? ' ☑ ' : ' ☐ ')+"Collapse the top", linkr.toggleCollapseTop, "C");
+    }
+};
+
+linkr.init();

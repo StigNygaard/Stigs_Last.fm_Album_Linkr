@@ -3,3 +3,5 @@ Stig's Last.fm Album Linkr is primarely a usercsript for adding album links and 
 But as a bonus it also has options to linkify About Me section and adding tapmusic collage on profiles...
 
 For more information, see: https://greasyfork.org/scripts/21153-stig-s-last-fm-album-linkr
+
+![Screenshot](https://greasyfork.org/system/screenshots/screenshots/000/005/727/original/lastfmalbumlinkrfeatures-900x798.png)

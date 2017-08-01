@@ -28,7 +28,7 @@
 var linkr = linkr || {
     // CHANGELOG - The most important updates/versions:
     changelog: [
-        {version: '2017.08.01.0', description: "Just moving source to GitHub repository."},
+        {version: '2017.08.01.1', description: "Just moving development source to a GitHub repository: https://github.com/StigNygaard/Stigs_Last.fm_Album_Linkr"},
         {version: '2017.06.25.0', description: "Tapmusic collage fix."},
         {version: '2017.04.22.0', description: "Adapting to site changes."},
         {version: '2017.04.16.0', description: "Minor cosmetic optimizations."},

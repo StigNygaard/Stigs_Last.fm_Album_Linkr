@@ -2,7 +2,7 @@
 // @name        Stig's Last.fm Album Linkr
 // @namespace   dk.rockland.userscript.lastfm.linkr
 // @description Adding album links and headers to tracks on Last.Fm's recent plays listings - plus linkifying About Me section on profiles
-// @version     2017.08.05.2
+// @version     2017.08.05.3
 // @author      Stig Nygaard, http://www.rockland.dk
 // @homepageURL http://www.rockland.dk/userscript/lastfm/linkr/
 // @supportURL  http://www.rockland.dk/userscript/lastfm/linkr/
@@ -228,7 +228,7 @@ var linkr = linkr || {
                                 linkr.log('Now trying to add tr...');
                                 tlists[j].insertBefore(tr, rows[i - 1]);
                                 linkr.log('and should be added now!?');
-                                i += 2; // or http://stackoverflow.com/questions/8766910/is-there-a-loop-start-over ?
+                                i += 1; // or http://stackoverflow.com/questions/8766910/is-there-a-loop-start-over ?
                             }
                         }
                     }

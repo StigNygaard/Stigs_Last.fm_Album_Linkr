@@ -2,7 +2,7 @@
 // @name        Stig's Last.fm Album Linkr
 // @namespace   dk.rockland.userscript.lastfm.linkr
 // @description Adding album links and headers to tracks on Last.Fm's recent plays listings - plus linkifying About Me section on profiles
-// @version     2017.08.05.1
+// @version     2017.08.05.2
 // @author      Stig Nygaard, http://www.rockland.dk
 // @homepageURL http://www.rockland.dk/userscript/lastfm/linkr/
 // @supportURL  http://www.rockland.dk/userscript/lastfm/linkr/
@@ -28,16 +28,14 @@
 var linkr = linkr || {
     // CHANGELOG - The most important updates/versions:
     changelog: [
+        {version: '2017.08.05.2', description: "Also allow album-header at top when currently scrobbling (yellow) track."},
         {version: '2017.08.05.1', description: "Adapting to a site change (Strange things happening on Recent Tracks list, but I think I found a way to fix it...)"},
         {version: '2017.08.01.1', description: "Just moving development source to a GitHub repository: https://github.com/StigNygaard/Stigs_Last.fm_Album_Linkr"},
         {version: '2017.06.25.0', description: "Tapmusic collage fix."},
-        {version: '2017.04.22.0', description: "Adapting to site changes."},
-        {version: '2017.04.16.0', description: "Minor cosmetic optimizations."},
         {version: '2017.04.03.0', description: "Code tuning. Now also compatible with Microsoft Edge using Tampermonkey!"},
         {version: '2017.03.01.0', description: "Found a work-around to keep tapmusic collages working on secure https last.fm pages (https://carlo.zottmann.org/posts/2013/04/14/google-image-resizer.html)."},
         {version: '2017.02.28.0', description: "Fix for loading album-icon on secure (https) last.fm pages."},
         {version: '2016.11.05.3', description: "Another bonus-feature added: Optionally embed album collage from http://www.tapmusic.net/lastfm on user's profiles (Enable it via menu in the userscript browser extension)."},
-        {version: '2016.11.05.0', description: 'Even more intelligent creation of album-links and headers when there are featured artists on some albumtracks.'},
         {version: '2016.10.26.0', description: 'More intelligent creation of links in album-headers when there are featured artists on some albumtracks.'},
         {version: '2016.10.19.0', description: 'Bonus-feature added: Linkifying URLs written in About Me section in Profiles.'},
         {version: '2016.07.04.0', description: '1st release.'}
@@ -166,7 +164,7 @@ var linkr = linkr || {
                 linkr.log('tlists['+j+'] has ' + rows.length + ' rows');
                 var loopstart=1;
                 if (j===0 && rows[0].classList.contains('now-scrobbling')) {
-                    loopstart=2; // Don't put album-header at very top of Recent Tracks if the 1st row is a currently scrobbling track
+                    // loopstart=2; // Uncomment this to prevent album-header at very top of Recent Tracks if the 1st row is a currently a scrobbling (yellow) track
                 }
                 for (i = loopstart; i < rows.length; i++) {
                     linkr.log('for-loop. i=' + i);
@@ -175,8 +173,8 @@ var linkr = linkr || {
                         if (    altvalue(rows[i]) &&
                                 altvalue(rows[i - 1]) &&
                                 altvalue(rows[i]) !== '' &&
-                                altvalue(rows[i]) === altvalue(rows[i - 1]) &&
-                                (i===1 || altvalue(rows[i]) !== altvalue(rows[i - 2]))) {
+                                altvalue(rows[i]).toLowerCase() === altvalue(rows[i - 1]).toLowerCase() &&
+                                (i===1 || altvalue(rows[i]).toLowerCase() !== altvalue(rows[i - 2]).toLowerCase()) ) {
                             linkr.log('for-loop. i=' + i + ' og vi har fundet en album-gruppes start', linkr.INFO);
                             // TRY to get albumartist right even when misc. featured artists on album tracks:
                             var bestindex = i-1;
@@ -186,7 +184,7 @@ var linkr = linkr || {
                             // var artistname = rows[bestindex].querySelector('td.chartlist-name span.chartlist-artists > a').textContent;
                             var tracks = [{absindex: bestindex, artistname: artistname, coverurl: (albumcoverelem ? albumcoverelem.src : null)}];
                             for (var k=i; k < rows.length; k++) {
-                                if (altvalue(rows[i-1]) !== altvalue(rows[k])) break; // new album
+                                if (altvalue(rows[i-1]).toLowerCase() !== altvalue(rows[k]).toLowerCase()) break; // new album
                                 artistlinkelem = rows[k].querySelector('td.chartlist-name span.chartlist-artists > a');
                                 albumcoverelem = rows[k].querySelector('td.chartlist-play a > img');
                                 tracks.push({absindex: k, artistname: artistlinkelem.textContent, coverurl: (albumcoverelem ? albumcoverelem.src : null)});

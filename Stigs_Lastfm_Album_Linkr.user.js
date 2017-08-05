@@ -2,7 +2,7 @@
 // @name        Stig's Last.fm Album Linkr
 // @namespace   dk.rockland.userscript.lastfm.linkr
 // @description Adding album links and headers to tracks on Last.Fm's recent plays listings - plus linkifying About Me section on profiles
-// @version     2017.08.01.0
+// @version     2017.08.05.1
 // @author      Stig Nygaard, http://www.rockland.dk
 // @homepageURL http://www.rockland.dk/userscript/lastfm/linkr/
 // @supportURL  http://www.rockland.dk/userscript/lastfm/linkr/
@@ -28,6 +28,7 @@
 var linkr = linkr || {
     // CHANGELOG - The most important updates/versions:
     changelog: [
+        {version: '2017.08.05.1', description: "Adapting to a site change (Strange things happening on Recent Tracks list, but I think I found a way to fix it...)"},
         {version: '2017.08.01.1', description: "Just moving development source to a GitHub repository: https://github.com/StigNygaard/Stigs_Last.fm_Album_Linkr"},
         {version: '2017.06.25.0', description: "Tapmusic collage fix."},
         {version: '2017.04.22.0', description: "Adapting to site changes."},
@@ -112,10 +113,12 @@ var linkr = linkr || {
         linkr.linking_running = true;
         function altvalue(elem) {
             if (elem && elem.firstElementChild) {
-                if (elem.firstElementChild.classList.contains('albumlink-row')) {
+                if (elem.classList.contains('albumlink-row') || elem.firstElementChild.classList.contains('albumlink-row')) {
                     return null;
                 } else if (elem.firstElementChild.firstElementChild && elem.firstElementChild.firstElementChild.firstElementChild && elem.firstElementChild.firstElementChild.firstElementChild.firstElementChild) {
                     return elem.firstElementChild.firstElementChild.firstElementChild.firstElementChild.alt;
+                } else if (elem.firstElementChild.firstElementChild && elem.firstElementChild.firstElementChild.firstElementChild) {
+                    return elem.firstElementChild.firstElementChild.firstElementChild.alt;
                 }
             }
             return null;
@@ -127,12 +130,13 @@ var linkr = linkr || {
             return (s.toLocaleUpperCase().indexOf(sub.toLocaleUpperCase()) > -1);
         }
         linkr.log('Running linking()... ', linkr.INFO);
-        var l = document.querySelectorAll('table.chartlist tr div > img');
+        var l = document.querySelectorAll('table.chartlist tbody tr div > img');
         var tr;
         var albumlink;
         for (var i=0; i < l.length; i++) {
             linkr.log('iteration '+ i + ' of ' + l.length);
-            if (l[i].alt && l[i].alt!=='') {
+            if (l[i].alt && l[i].alt.trim()!=='') {
+                l[i].alt = l[i].alt.trim();
                 l[i].title = l[i].alt;
                 var parent = l[i].parentNode;
                 tr = parent;
@@ -157,43 +161,44 @@ var linkr = linkr || {
         linkr.log('tlists.length='+tlists.length);
         for (var j=0; j<tlists.length; j++) {
             linkr.log('Loop with tlists['+j+'].');
-            if (tlists[j] && tlists[j].children && tlists[j].children.length > 2) {
-                linkr.log('tlists['+j+'] has ' + tlists[j].children.length + ' children');
+            var rows = tlists[j].querySelectorAll('tr.js-link-block');
+            if (rows && rows.length > 2) {
+                linkr.log('tlists['+j+'] has ' + rows.length + ' rows');
                 var loopstart=1;
-                if (j===0 && tlists[j].children[0].classList.contains('now-scrobbling')) {
+                if (j===0 && rows[0].classList.contains('now-scrobbling')) {
                     loopstart=2; // Don't put album-header at very top of Recent Tracks if the 1st row is a currently scrobbling track
                 }
-                for (i = loopstart; i < tlists[j].children.length; i++) {
+                for (i = loopstart; i < rows.length; i++) {
                     linkr.log('for-loop. i=' + i);
-                    if (i===1 || !tlists[j].children[i - 2].classList.contains('albumlink-row')) {
+                    if (i===1 || !rows[i - 2].classList.contains('albumlink-row')) {
                         linkr.log('for-loop. i=' + i + ' og i-2 er IKKE allerede albumlink-row');
-                        if (    altvalue(tlists[j].children[i]) &&
-                                altvalue(tlists[j].children[i - 1]) &&
-                                altvalue(tlists[j].children[i]) !== '' &&
-                                altvalue(tlists[j].children[i]) === altvalue(tlists[j].children[i - 1]) &&
-                                (i===1 || altvalue(tlists[j].children[i]) !== altvalue(tlists[j].children[i - 2]))) {
+                        if (    altvalue(rows[i]) &&
+                                altvalue(rows[i - 1]) &&
+                                altvalue(rows[i]) !== '' &&
+                                altvalue(rows[i]) === altvalue(rows[i - 1]) &&
+                                (i===1 || altvalue(rows[i]) !== altvalue(rows[i - 2]))) {
                             linkr.log('for-loop. i=' + i + ' og vi har fundet en album-gruppes start', linkr.INFO);
                             // TRY to get albumartist right even when misc. featured artists on album tracks:
                             var bestindex = i-1;
-                            var artistlinkelem = tlists[j].children[bestindex].querySelector('td.chartlist-name span.chartlist-artists > a');
-                            var albumcoverelem = tlists[j].children[bestindex].querySelector('td.chartlist-play a > img');
+                            var artistlinkelem = rows[bestindex].querySelector('td.chartlist-name span.chartlist-artists > a');
+                            var albumcoverelem = rows[bestindex].querySelector('td.chartlist-play a > img');
                             var artistname = artistlinkelem.textContent;
-                            // var artistname = tlists[j].children[bestindex].querySelector('td.chartlist-name span.chartlist-artists > a').textContent;
+                            // var artistname = rows[bestindex].querySelector('td.chartlist-name span.chartlist-artists > a').textContent;
                             var tracks = [{absindex: bestindex, artistname: artistname, coverurl: (albumcoverelem ? albumcoverelem.src : null)}];
-                            for (var k=i; k < tlists[j].children.length; k++) {
-                                if (altvalue(tlists[j].children[i-1]) !== altvalue(tlists[j].children[k])) break; // new album
-                                artistlinkelem = tlists[j].children[k].querySelector('td.chartlist-name span.chartlist-artists > a');
-                                albumcoverelem = tlists[j].children[k].querySelector('td.chartlist-play a > img');
+                            for (var k=i; k < rows.length; k++) {
+                                if (altvalue(rows[i-1]) !== altvalue(rows[k])) break; // new album
+                                artistlinkelem = rows[k].querySelector('td.chartlist-name span.chartlist-artists > a');
+                                albumcoverelem = rows[k].querySelector('td.chartlist-play a > img');
                                 tracks.push({absindex: k, artistname: artistlinkelem.textContent, coverurl: (albumcoverelem ? albumcoverelem.src : null)});
-                                if (tlists[j].children[k].querySelector('td.chartlist-name span.chartlist-artists > a').textContent.length < artistname.length) {
+                                if (rows[k].querySelector('td.chartlist-name span.chartlist-artists > a').textContent.length < artistname.length) {
                                     bestindex = k;
                                     artistname = artistlinkelem.textContent;
                                 }
-                                // linkr.log('*** k='+k+': altvalue='+altvalue(tlists[j].children[k])+', artist='+ tlists[j].children[k].querySelector('td.chartlist-name span.chartlist-artists > a').textContent, true)
+                                // linkr.log('*** k='+k+': altvalue='+altvalue(rows[k])+', artist='+ rows[k].querySelector('td.chartlist-name span.chartlist-artists > a').textContent, true)
                             }
-                            var artistlink = tlists[j].children[bestindex].querySelector('td.chartlist-name span.chartlist-artists > a');
-                            var albumtitle = altvalue(tlists[j].children[bestindex]);
-                            var albumcover = tlists[j].children[bestindex].querySelector('td.chartlist-play a > img');
+                            var artistlink = rows[bestindex].querySelector('td.chartlist-name span.chartlist-artists > a');
+                            var albumtitle = altvalue(rows[bestindex]);
+                            var albumcover = rows[bestindex].querySelector('td.chartlist-play a > img');
                             if (albumcover) albumcover=albumcover.src;
                             if (artistlink) {
                                 if (tracks.reduce(function (x, y) {
@@ -215,12 +220,15 @@ var linkr = linkr || {
                                         linkr.log('*** [far after split()]: Seems "' + albumtitle + '" is a "Various Artists" album...');
                                     }
                                 }
-                                albumlink = artistlink + '/' + encodeURIComponent(altvalue(tlists[j].children[bestindex])).replace(/%20/g, '+') + '/';
-                                tr = document.createElement("tr");
+                                albumlink = artistlink + '/' + encodeURIComponent(altvalue(rows[bestindex])).replace(/%20/g, '+') + '/';
+                                tr = document.createElement('tr');
                                 tr.classList.add('albumlink-row', 'js-link-block', 'js-focus-controls-container');                                                                                                                                                  // https://c1.staticflickr.com/3/2821/32308516104_dc32a69ba0_o.png // or http://www.rockland.dk/img/album244c.png // or https://images1-fcus-opensocial.googleusercontent.com/gadgets/proxy?url=http%3A%2F%2Fwww.rockland.dk%2Fimg%2Falbum244c.png&container=focus&resize_w=244&refresh=3600
+                                tr.setAttribute('data-ajax-form-state','');
+                                tr.setAttribute('data-recenttrack-id','');
+                                tr.setAttribute('data-timestamp','');
                                 tr.innerHTML = '<td class="chartlist-play"><div class="chartlist-play-image"><a href="' + albumlink + '"><img title="' + albumtitle + '" src="' + albumcover + '" class="cover-art"></a></div></td><td class="chartlist-loved"><a href="' + albumlink.replace(/\/user\/[^\/]+\/library\//, '/') + '"><img src="https://images1-focus-opensocial.googleusercontent.com/gadgets/proxy?url=http%3A%2F%2Fwww.rockland.dk%2Fimg%2Falbum244c.png&container=focus&resize_w=24&refresh=50000" class="cover-art" alt="album" /></a></td><td class="chartlist-name"><span class="chartlist-ellipsis-wrap"><span class="chartlist-artists"><a href="' + artistlink + '" title="' + artistname + '">' + artistname + '</a></span><span class="artist-name-spacer"> — </span><a href="' + albumlink + '" class="link-block-target" title="' + artistname + ' — ' + albumtitle + '">' + albumtitle + '</a></span></td><td class="chartlist-buylinks chartlist-focus-control-cell"><div class="lazy-buylinks focus-control"><button class="disclose-trigger lazy-buylinks-toggle" aria-expanded="false" data-lazy-buylink="" data-lazy-buylink-url="' + albumlink.replace(/\/user\/[^\/]+\/library\//, '/') + '/+partial/buylinks">Buy</button></div></td>' + (hasMorebuttons ? '<td class="chartlist-more chartlist-focus-control-cell"><div class="focus-control"></div></td>' : '') + '<td class="chartlist-timestamp"></td>';
                                 linkr.log('Now trying to add tr...');
-                                tlists[j].insertBefore(tr, tlists[j].children[i - 1]);
+                                tlists[j].insertBefore(tr, rows[i - 1]);
                                 linkr.log('and should be added now!?');
                                 i += 2; // or http://stackoverflow.com/questions/8766910/is-there-a-loop-start-over ?
                             }

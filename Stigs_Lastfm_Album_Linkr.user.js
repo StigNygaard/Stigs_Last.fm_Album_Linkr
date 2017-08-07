@@ -2,7 +2,7 @@
 // @name        Stig's Last.fm Album Linkr
 // @namespace   dk.rockland.userscript.lastfm.linkr
 // @description Adding album links and headers to tracks on Last.Fm's recent plays listings - plus linkifying About Me section on profiles
-// @version     2017.08.05.3
+// @version     2017.08.07.0
 // @author      Stig Nygaard, http://www.rockland.dk
 // @homepageURL http://www.rockland.dk/userscript/lastfm/linkr/
 // @supportURL  http://www.rockland.dk/userscript/lastfm/linkr/
@@ -28,7 +28,8 @@
 var linkr = linkr || {
     // CHANGELOG - The most important updates/versions:
     changelog: [
-        {version: '2017.08.05.2', description: "Also allow album-header at top when currently scrobbling (yellow) track."},
+        {version: '2017.08.07.0', description: "Separate links for short and long album titles ('Special Edition', 'Remastered' etc.)"},
+        {version: '2017.08.05.2', description: "Now also allow an album-header at very top when currently scrobbling a (yellow) track."},
         {version: '2017.08.05.1', description: "Adapting to a site change (Strange things happening on Recent Tracks list, but I think I found a way to fix it...)"},
         {version: '2017.08.01.1', description: "Just moving development source to a GitHub repository: https://github.com/StigNygaard/Stigs_Last.fm_Album_Linkr"},
         {version: '2017.06.25.0', description: "Tapmusic collage fix."},
@@ -57,7 +58,7 @@ var linkr = linkr || {
             style.type = 'text/css';
             style.id = 'linkrStyle';
             style.innerHTML = '#tapmusic {font-style:italic; font-size:12px; color:rgb(153,153,153)} .tapcollage {line-height:1.5; animation:fadein 15s; animation-timing-function:ease-in;} .tapcredit{line-height:1.3} @keyframes fadein {from{color:rgba(153,153,153,0);} to{color:rgba(153,153,153,1);}} ' +
-                              'tr.albumlink-row,  tr.albumlink-row > td {background-color:#f1cccc !important} tr.albumlink-row > td.chartlist-name {font-style:italic} tr.albumlink-row > td.chartlist-name > span > span {font-style:normal} tr.albumlink-row:hover, tr.albumlink-row:hover > td {background-color:#f9d4d4 !important;} ' +
+                              'tr.albumlink-row,  tr.albumlink-row > td {background-color:#f1cccc !important} tr.albumlink-row > td.chartlist-name {font-style:italic} tr.albumlink-row > td.chartlist-name > span > span {font-style:normal} tr.albumlink-row:hover, tr.albumlink-row:hover > td {background-color:#f9d4d4 !important;} .albumextension, .albumextension .link-block-target {font-style:italic; color:#707070 !important}' +
                               (linkr.collapseTop ? 'div[id^="gpt-slot-"] {display:none}' : '');
             document.getElementsByTagName('head')[0].appendChild(style);
             linkr.log('linkrStyle has been ADDED');
@@ -126,6 +127,38 @@ var linkr = linkr || {
             sub = sub.trim().replace(/^the\s/gi, "").replace(/\,\sthe$/gi,"").replace(" & ", " and ").trim();
             //if (s.toLocaleUpperCase().indexOf(sub.toLocaleUpperCase()) == -1) {alert('"'+s+'" does NOT include "'+sub+'"!')}
             return (s.toLocaleUpperCase().indexOf(sub.toLocaleUpperCase()) > -1);
+        }
+        function splitAlbumTitle(title) {
+            title = title.trim();
+            var rtval = {full:title, basic:title};
+            var regs = [/^([^$]*[^-\s])(\s(-\s)?)(\(?[\w\s]+\sEdition\)?)$/i,
+                        /^([^$]*[^-\s])(\s(-\s)?)(\(?Deluxe\)?)$/i,
+                        /^([^$]*[^-\s])(\s(-\s)?)(\(?Remastered[\s\d]*\)?)$/i,
+                        /^([^$]*[^-\s])(\s(-\s)?)(\(?EP\)?)$/i];
+            for (var i=0; i<regs.length; i++) {
+                var m = title.match(regs[i]);
+                // 0: full (= basic+spacer+extension)
+                // 1: basic
+                // 2: spacer
+                // 3: (ignore)
+                // 4: extension
+                if (m!==null && m.length===5) {
+                    rtval.basic = m[1];
+                    rtval.spacer = m[2];
+                    rtval.extension = m[4];
+                    break; // return rtval;
+                }
+            }
+            return rtval;
+        }
+        function albumCompoundLinkTag(artistname, artistlink, title, albumlink) {
+            title = splitAlbumTitle(title);
+            if (title.extension) {
+                var shortAlbumlink = artistlink + '/' + encodeURIComponent(title.basic).replace(/%20/g, '+') + '/';
+                return '<a href="' + shortAlbumlink + '" class="link-block-target" title="' + artistname + ' — ' + title.basic + '">' + title.basic + '</a><span class="albumextension">' + title.spacer + '<a href="' + albumlink + '" class="link-block-target" title="' + artistname + ' — ' + title.full + '">' + title.extension + '</a></span>';
+            } else {
+                return '<a href="' + albumlink + '" class="link-block-target" title="' + artistname + ' — ' + title.full + '">' + title.full + '</a>';
+            }
         }
         linkr.log('Running linking()... ', linkr.INFO);
         var l = document.querySelectorAll('table.chartlist tbody tr div > img');
@@ -218,13 +251,13 @@ var linkr = linkr || {
                                         linkr.log('*** [far after split()]: Seems "' + albumtitle + '" is a "Various Artists" album...');
                                     }
                                 }
-                                albumlink = artistlink + '/' + encodeURIComponent(altvalue(rows[bestindex])).replace(/%20/g, '+') + '/';
+                                albumlink = artistlink + '/' + encodeURIComponent(albumtitle).replace(/%20/g, '+') + '/';
                                 tr = document.createElement('tr');
                                 tr.classList.add('albumlink-row', 'js-link-block', 'js-focus-controls-container');                                                                                                                                                  // https://c1.staticflickr.com/3/2821/32308516104_dc32a69ba0_o.png // or http://www.rockland.dk/img/album244c.png // or https://images1-fcus-opensocial.googleusercontent.com/gadgets/proxy?url=http%3A%2F%2Fwww.rockland.dk%2Fimg%2Falbum244c.png&container=focus&resize_w=244&refresh=3600
                                 tr.setAttribute('data-ajax-form-state','');
                                 tr.setAttribute('data-recenttrack-id','');
                                 tr.setAttribute('data-timestamp','');
-                                tr.innerHTML = '<td class="chartlist-play"><div class="chartlist-play-image"><a href="' + albumlink + '"><img title="' + albumtitle + '" src="' + albumcover + '" class="cover-art"></a></div></td><td class="chartlist-loved"><a href="' + albumlink.replace(/\/user\/[^\/]+\/library\//, '/') + '"><img src="https://images1-focus-opensocial.googleusercontent.com/gadgets/proxy?url=http%3A%2F%2Fwww.rockland.dk%2Fimg%2Falbum244c.png&container=focus&resize_w=24&refresh=50000" class="cover-art" alt="album" /></a></td><td class="chartlist-name"><span class="chartlist-ellipsis-wrap"><span class="chartlist-artists"><a href="' + artistlink + '" title="' + artistname + '">' + artistname + '</a></span><span class="artist-name-spacer"> — </span><a href="' + albumlink + '" class="link-block-target" title="' + artistname + ' — ' + albumtitle + '">' + albumtitle + '</a></span></td><td class="chartlist-buylinks chartlist-focus-control-cell"><div class="lazy-buylinks focus-control"><button class="disclose-trigger lazy-buylinks-toggle" aria-expanded="false" data-lazy-buylink="" data-lazy-buylink-url="' + albumlink.replace(/\/user\/[^\/]+\/library\//, '/') + '/+partial/buylinks">Buy</button></div></td>' + (hasMorebuttons ? '<td class="chartlist-more chartlist-focus-control-cell"><div class="focus-control"></div></td>' : '') + '<td class="chartlist-timestamp"></td>';
+                                tr.innerHTML = '<td class="chartlist-play"><div class="chartlist-play-image"><a href="' + albumlink + '"><img title="' + albumtitle + '" src="' + albumcover + '" class="cover-art"></a></div></td><td class="chartlist-loved"><a href="' + albumlink.replace(/\/user\/[^\/]+\/library\//, '/') + '"><img src="https://images1-focus-opensocial.googleusercontent.com/gadgets/proxy?url=http%3A%2F%2Fwww.rockland.dk%2Fimg%2Falbum244c.png&container=focus&resize_w=24&refresh=50000" class="cover-art" alt="album" /></a></td><td class="chartlist-name"><span class="chartlist-ellipsis-wrap"><span class="chartlist-artists"><a href="' + artistlink + '" title="' + artistname + '">' + artistname + '</a></span><span class="artist-name-spacer"> — </span>' + albumCompoundLinkTag(artistname, artistlink, albumtitle, albumlink) + '</span></td><td class="chartlist-buylinks chartlist-focus-control-cell"><div class="lazy-buylinks focus-control"><button class="disclose-trigger lazy-buylinks-toggle" aria-expanded="false" data-lazy-buylink="" data-lazy-buylink-url="' + albumlink.replace(/\/user\/[^\/]+\/library\//, '/') + '/+partial/buylinks">Buy</button></div></td>' + (hasMorebuttons ? '<td class="chartlist-more chartlist-focus-control-cell"><div class="focus-control"></div></td>' : '') + '<td class="chartlist-timestamp"></td>';
                                 linkr.log('Now trying to add tr...');
                                 tlists[j].insertBefore(tr, rows[i - 1]);
                                 linkr.log('and should be added now!?');

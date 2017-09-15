@@ -2,7 +2,7 @@
 // @name        Stig's Last.fm Album Linkr
 // @namespace   dk.rockland.userscript.lastfm.linkr
 // @description Adding album links and headers to tracks on Last.Fm's recent plays listings - plus linkifying About Me section on profiles
-// @version     2017.08.07.0
+// @version     2017.09.15.0
 // @author      Stig Nygaard, http://www.rockland.dk
 // @homepageURL http://www.rockland.dk/userscript/lastfm/linkr/
 // @supportURL  http://www.rockland.dk/userscript/lastfm/linkr/
@@ -32,8 +32,6 @@ var linkr = linkr || {
         {version: '2017.08.05.2', description: "Now also allow an album-header at very top when currently scrobbling a (yellow) track."},
         {version: '2017.08.05.1', description: "Adapting to a site change (Strange things happening on Recent Tracks list, but I think I found a way to fix it...)"},
         {version: '2017.08.01.1', description: "Just moving development source to a GitHub repository: https://github.com/StigNygaard/Stigs_Last.fm_Album_Linkr"},
-        {version: '2017.06.25.0', description: "Tapmusic collage fix."},
-        {version: '2017.04.03.0', description: "Code tuning. Now also compatible with Microsoft Edge using Tampermonkey!"},
         {version: '2017.03.01.0', description: "Found a work-around to keep tapmusic collages working on secure https last.fm pages (https://carlo.zottmann.org/posts/2013/04/14/google-image-resizer.html)."},
         {version: '2017.02.28.0', description: "Fix for loading album-icon on secure (https) last.fm pages."},
         {version: '2016.11.05.3', description: "Another bonus-feature added: Optionally embed album collage from http://www.tapmusic.net/lastfm on user's profiles (Enable it via menu in the userscript browser extension)."},
@@ -132,6 +130,7 @@ var linkr = linkr || {
             title = title.trim();
             var rtval = {full:title, basic:title};
             var regs = [/^([^$]*[^-\s])(\s(-\s)?)(\(?[\w\s]+\sEdition\)?)$/i,
+                        /^([^$]*[^-\s])(\s(-\s)?)(\(?[\w\s]+\sVersion\)?)$/i,
                         /^([^$]*[^-\s])(\s(-\s)?)(\(?Deluxe\)?)$/i,
                         /^([^$]*[^-\s])(\s(-\s)?)(\(?Remastered[\s\d]*\)?)$/i,
                         /^([^$]*[^-\s])(\s(-\s)?)(\(?EP\)?)$/i];

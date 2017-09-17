@@ -2,7 +2,7 @@
 // @name        Stig's Last.fm Album Linkr
 // @namespace   dk.rockland.userscript.lastfm.linkr
 // @description Adding album links and headers to tracks on Last.Fm's recent plays listings - plus linkifying About Me section on profiles
-// @version     2017.09.15.0
+// @version     2017.09.17.0
 // @author      Stig Nygaard, http://www.rockland.dk
 // @homepageURL http://www.rockland.dk/userscript/lastfm/linkr/
 // @supportURL  http://www.rockland.dk/userscript/lastfm/linkr/
@@ -129,9 +129,9 @@ var linkr = linkr || {
         function splitAlbumTitle(title) {
             title = title.trim();
             var rtval = {full:title, basic:title};
-            var regs = [/^([^$]*[^-\s])(\s(-\s)?)(\(?[\w\s]+\sEdition\)?)$/i,
-                        /^([^$]*[^-\s])(\s(-\s)?)(\(?[\w\s]+\sVersion\)?)$/i,
-                        /^([^$]*[^-\s])(\s(-\s)?)(\(?Deluxe\)?)$/i,
+            var regs = [/^([^$]*[^-\s])(\s(-\s)?)(\(?[\w\s]+\sEdition[\w\s]*\)?)$/i,
+                        /^([^$]*[^-\s])(\s(-\s)?)(\(?[\w\s]+\sVersion[\w\s]*\)?)$/i,
+                        /^([^$]*[^-\s])(\s(-\s)?)(\(?Deluxe[\w\s]*\)?)$/i,
                         /^([^$]*[^-\s])(\s(-\s)?)(\(?Remastered[\s\d]*\)?)$/i,
                         /^([^$]*[^-\s])(\s(-\s)?)(\(?EP\)?)$/i];
             for (var i=0; i<regs.length; i++) {
@@ -256,7 +256,7 @@ var linkr = linkr || {
                                 tr.setAttribute('data-ajax-form-state','');
                                 tr.setAttribute('data-recenttrack-id','');
                                 tr.setAttribute('data-timestamp','');
-                                tr.innerHTML = '<td class="chartlist-play"><div class="chartlist-play-image"><a href="' + albumlink + '"><img title="' + albumtitle + '" src="' + albumcover + '" class="cover-art"></a></div></td><td class="chartlist-loved"><a href="' + albumlink.replace(/\/user\/[^\/]+\/library\//, '/') + '"><img src="https://images1-focus-opensocial.googleusercontent.com/gadgets/proxy?url=http%3A%2F%2Fwww.rockland.dk%2Fimg%2Falbum244c.png&container=focus&resize_w=24&refresh=50000" class="cover-art" alt="album" /></a></td><td class="chartlist-name"><span class="chartlist-ellipsis-wrap"><span class="chartlist-artists"><a href="' + artistlink + '" title="' + artistname + '">' + artistname + '</a></span><span class="artist-name-spacer"> — </span>' + albumCompoundLinkTag(artistname, artistlink, albumtitle, albumlink) + '</span></td><td class="chartlist-buylinks chartlist-focus-control-cell"><div class="lazy-buylinks focus-control"><button class="disclose-trigger lazy-buylinks-toggle" aria-expanded="false" data-lazy-buylink="" data-lazy-buylink-url="' + albumlink.replace(/\/user\/[^\/]+\/library\//, '/') + '/+partial/buylinks">Buy</button></div></td>' + (hasMorebuttons ? '<td class="chartlist-more chartlist-focus-control-cell"><div class="focus-control"></div></td>' : '') + '<td class="chartlist-timestamp"></td>';
+                                tr.innerHTML = '<td class="chartlist-play"><div class="chartlist-play-image"><a href="' + albumlink + '"><img title="' + artistname + ' — ' + albumtitle + '" src="' + albumcover + '" class="cover-art"></a></div></td><td class="chartlist-loved"><a href="' + albumlink.replace(/\/user\/[^\/]+\/library\//, '/') + '"><img src="https://images1-focus-opensocial.googleusercontent.com/gadgets/proxy?url=http%3A%2F%2Fwww.rockland.dk%2Fimg%2Falbum244c.png&container=focus&resize_w=24&refresh=50000" class="cover-art" alt="album" /></a></td><td class="chartlist-name"><span class="chartlist-ellipsis-wrap"><span class="chartlist-artists"><a href="' + artistlink + '" title="' + artistname + '">' + artistname + '</a></span><span class="artist-name-spacer"> — </span>' + albumCompoundLinkTag(artistname, artistlink, albumtitle, albumlink) + '</span></td><td class="chartlist-buylinks chartlist-focus-control-cell"><div class="lazy-buylinks focus-control"><button class="disclose-trigger lazy-buylinks-toggle" aria-expanded="false" data-lazy-buylink="" data-lazy-buylink-url="' + albumlink.replace(/\/user\/[^\/]+\/library\//, '/') + '/+partial/buylinks">Buy</button></div></td>' + (hasMorebuttons ? '<td class="chartlist-more chartlist-focus-control-cell"><div class="focus-control"></div></td>' : '') + '<td class="chartlist-timestamp"></td>';
                                 linkr.log('Now trying to add tr...');
                                 tlists[j].insertBefore(tr, rows[i - 1]);
                                 linkr.log('and should be added now!?');

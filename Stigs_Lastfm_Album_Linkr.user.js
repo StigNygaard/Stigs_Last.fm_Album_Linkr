@@ -2,7 +2,7 @@
 // @name            Stig's Last.fm Album Linkr
 // @namespace       dk.rockland.userscript.lastfm.linkr
 // @description     Adding album links and headers to tracks on Last.Fm's recent plays listings - plus linkifying About Me section on profiles
-// @version         2017.10.26.1
+// @version         2017.10.27.0
 // @author          Stig Nygaard, http://www.rockland.dk
 // @homepageURL     http://www.rockland.dk/userscript/lastfm/linkr/
 // @supportURL      http://www.rockland.dk/userscript/lastfm/linkr/
@@ -28,6 +28,21 @@
 // @require         https://greasyfork.org/scripts/34527/code/GM%20Common%20Library%20-%20GMCommonAPIjs.js
 // @noframes
 // ==/UserScript==
+
+/*
+ *      Stig's Last.fm Album Linkr is an userscript specially minded album-listeners on Last.Fm.
+ *      It gives you better profile-pages with special focus on albums in recent tracks lists.
+ *
+ *      https://greasyfork.org/scripts/21153-stig-s-last-fm-album-linkr
+ *      https://github.com/StigNygaard/Stigs_Last.fm_Album_Linkr
+ *      https://www.last.fm/user/rockland
+ *
+ *      Should work with all popular browsers and userscript managers. Compatibility with
+ *      the new/upcoming Greasemonkey 4 WebExtension is done with the help of GM Common Library:
+ *
+ *      https://github.com/StigNygaard/GMCommonAPI.js
+ *      https://greasyfork.org/scripts/34527-gm-common-library-gmcommonapi-js
+ */
 
 var linkr = linkr || {
     // CHANGELOG - The most important updates/versions:
@@ -126,7 +141,6 @@ var linkr = linkr || {
         function containing(s, sub) {
             s = s.trim().replace(/^the\s/gi, "").replace(/\,\sthe$/gi,"").replace(" & ", " and ").trim();
             sub = sub.trim().replace(/^the\s/gi, "").replace(/\,\sthe$/gi,"").replace(" & ", " and ").trim();
-            //if (s.toLocaleUpperCase().indexOf(sub.toLocaleUpperCase()) == -1) {alert('"'+s+'" does NOT include "'+sub+'"!')}
             return (s.toLocaleUpperCase().indexOf(sub.toLocaleUpperCase()) > -1);
         }
         function splitAlbumTitle(title) {
@@ -217,7 +231,6 @@ var linkr = linkr || {
                             var artistlinkelem = rows[bestindex].querySelector('td.chartlist-name span.chartlist-artists > a');
                             var albumcoverelem = rows[bestindex].querySelector('td.chartlist-play a > img');
                             var artistname = artistlinkelem.textContent;
-                            // var artistname = rows[bestindex].querySelector('td.chartlist-name span.chartlist-artists > a').textContent;
                             var tracks = [{absindex: bestindex, artistname: artistname, coverurl: (albumcoverelem ? albumcoverelem.src : null)}];
                             for (var k=i; k < rows.length; k++) {
                                 if (altvalue(rows[i-1]).toLowerCase() !== altvalue(rows[k]).toLowerCase()) break; // new album
@@ -260,8 +273,6 @@ var linkr = linkr || {
                                 tr.setAttribute('data-ajax-form-state','');
                                 tr.setAttribute('data-recenttrack-id','');
                                 tr.setAttribute('data-timestamp','');
-                                //tr.innerHTML = '<td class="chartlist-play"><div class="chartlist-play-image"><a href="' + albumlink + '"><img title="' + artistname + ' — ' + albumtitle + '" src="' + albumcover + '" class="cover-art"></a></div></td><td class="chartlist-loved"><a href="' + albumlink.replace(/\/user\/[^\/]+\/library\//, '/') + '"><img src="https://images1-focus-opensocial.googleusercontent.com/gadgets/proxy?url=http%3A%2F%2Fwww.rockland.dk%2Fimg%2Falbum244c.png&container=focus&resize_w=24&refresh=50000" class="cover-art" alt="album" /></a></td><td class="chartlist-name"><span class="chartlist-ellipsis-wrap"><span class="chartlist-artists"><a href="' + artistlink + '" title="' + artistname + '">' + artistname + '</a></span><span class="artist-name-spacer"> — </span>' + albumCompoundLinkTag(artistname, artistlink, albumtitle, albumlink) + '</span></td><td class="chartlist-buylinks chartlist-focus-control-cell"><div class="lazy-buylinks focus-control"><button class="disclose-trigger lazy-buylinks-toggle" aria-expanded="false" data-lazy-buylink="" data-lazy-buylink-url="' + albumlink.replace(/\/user\/[^\/]+\/library\//, '/') + '/+partial/buylinks">Buy</button></div></td>' + (hasMorebuttons ? '<td class="chartlist-more chartlist-focus-control-cell"><div class="focus-control"></div></td>' : '') + '<td class="chartlist-timestamp"></td>';
-                                //tr.innerHTML = '<td class="chartlist-play"><div class="chartlist-play-image"><a href="' + albumlink + '"><img title="' + artistname + ' — ' + albumtitle + '" src="' + albumcover + '" class="cover-art"></a></div></td><td class="chartlist-loved"><a href="' + albumlink.replace(/\/user\/[^\/]+\/library\//, '/') + '"><img src="' + GMC.getResourceURL('albumIcon')+ '" class="cover-art" alt="album" /></a></td><td class="chartlist-name"><span class="chartlist-ellipsis-wrap"><span class="chartlist-artists"><a href="' + artistlink + '" title="' + artistname + '">' + artistname + '</a></span><span class="artist-name-spacer"> — </span>' + albumCompoundLinkTag(artistname, artistlink, albumtitle, albumlink) + '</span></td><td class="chartlist-buylinks chartlist-focus-control-cell"><div class="lazy-buylinks focus-control"><button class="disclose-trigger lazy-buylinks-toggle" aria-expanded="false" data-lazy-buylink="" data-lazy-buylink-url="' + albumlink.replace(/\/user\/[^\/]+\/library\//, '/') + '/+partial/buylinks">Buy</button></div></td>' + (hasMorebuttons ? '<td class="chartlist-more chartlist-focus-control-cell"><div class="focus-control"></div></td>' : '') + '<td class="chartlist-timestamp"></td>';
                                 tr.innerHTML = '<td class="chartlist-play"><div class="chartlist-play-image"><a href="' + albumlink + '"><img title="' + albumtitle + '" src="' + albumcover + '" class="cover-art"></a></div></td><td class="chartlist-loved"><a href="' + albumlink.replace(/\/user\/[^\/]+\/library\//, '/') + '"><img src="' + GMC.getResourceURL('albumIcon')+ '" class="cover-art" alt="album" /></a></td><td class="chartlist-name"><span class="chartlist-ellipsis-wrap"><span class="chartlist-artists"><a href="' + artistlink + '" title="' + artistname + '">' + artistname + '</a></span><span class="artist-name-spacer"> — </span>' + albumCompoundLinkTag(artistname, artistlink, albumtitle, albumlink) + '</span></td><td class="chartlist-buylinks chartlist-focus-control-cell"><div class="lazy-buylinks focus-control"><button class="disclose-trigger lazy-buylinks-toggle" aria-expanded="false" data-lazy-buylink="" data-lazy-buylink-url="' + albumlink.replace(/\/user\/[^\/]+\/library\//, '/') + '/+partial/buylinks">Buy</button></div></td>' + (hasMorebuttons ? '<td class="chartlist-more chartlist-focus-control-cell"><div class="focus-control"></div></td>' : '') + '<td class="chartlist-timestamp"></td>';
                                 linkr.log('Now trying to add tr...');
                                 tlists[j].insertBefore(tr, rows[i - 1]);

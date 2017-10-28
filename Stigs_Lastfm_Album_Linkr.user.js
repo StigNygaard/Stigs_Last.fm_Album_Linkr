@@ -2,7 +2,7 @@
 // @name            Stig's Last.fm Album Linkr
 // @namespace       dk.rockland.userscript.lastfm.linkr
 // @description     Adding album links and headers to tracks on Last.Fm's recent plays listings - plus linkifying About Me section on profiles
-// @version         2017.10.27.0
+// @version         2017.10.28.1
 // @author          Stig Nygaard, http://www.rockland.dk
 // @homepageURL     http://www.rockland.dk/userscript/lastfm/linkr/
 // @supportURL      http://www.rockland.dk/userscript/lastfm/linkr/
@@ -18,8 +18,6 @@
 // @match           *://*.lastfm.sv/*
 // @match           *://*.lastfm.tr/*
 // @match           *://*.lastfm.zh/*
-// @grant           GM.info
-// @grant           GM_info
 // @grant           GM_registerMenuCommand
 // @grant           GM_getResourceURL
 // @grant           GM_getValue
@@ -30,8 +28,8 @@
 // ==/UserScript==
 
 /*
- *      Stig's Last.fm Album Linkr is an userscript specially minded album-listeners on Last.Fm.
- *      It gives you better profile-pages with special focus on albums in recent tracks lists.
+ *      Stig's Last.fm Album Linkr is an userscript especially minded album-listeners on Last.Fm.
+ *      It gives you better profile-pages with extra focus on albums in "recent tracks" lists.
  *
  *      https://greasyfork.org/scripts/21153-stig-s-last-fm-album-linkr
  *      https://github.com/StigNygaard/Stigs_Last.fm_Album_Linkr

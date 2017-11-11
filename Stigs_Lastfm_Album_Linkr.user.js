@@ -2,7 +2,7 @@
 // @name            Stig's Last.fm Album Linkr
 // @namespace       dk.rockland.userscript.lastfm.linkr
 // @description     Adding album links and headers to tracks on Last.Fm's recent plays listings - plus linkifying About Me section on profiles
-// @version         2017.10.28.2
+// @version         2017.11.11.1
 // @author          Stig Nygaard, http://www.rockland.dk
 // @homepageURL     http://www.rockland.dk/userscript/lastfm/linkr/
 // @supportURL      http://www.rockland.dk/userscript/lastfm/linkr/
@@ -23,7 +23,7 @@
 // @grant           GM_getValue
 // @grant           GM_setValue
 // @resource        albumIcon https://images1-focus-opensocial.googleusercontent.com/gadgets/proxy?url=http%3A%2F%2Fwww.rockland.dk%2Fimg%2Falbum244c.png&container=focus&resize_w=24&refresh=50000
-// @require         https://greasyfork.org/scripts/34527/code/GMCommonAPI.js
+// @require         https://greasyfork.org/scripts/34527/code/GMCommonAPI.js?version=229618
 // @noframes
 // ==/UserScript==
 
@@ -45,6 +45,7 @@
 var linkr = linkr || {
     // CHANGELOG - The most important updates/versions:
     changelog: [
+        {version: '2017.11.11.1', description: "Menu tuning."},
         {version: '2017.10.26.1', description: "Now fully compatible with the upcoming Greasemonkey 4 WebExtension (Use webpage context-menu for options in GM4/Firefox)."},
         {version: '2017.08.07.0', description: "Separate links for short and long album titles ('Special Edition', 'Remastered' etc.)"},
         {version: '2017.08.01.1', description: "Moving development source to a GitHub repository: https://github.com/StigNygaard/Stigs_Last.fm_Album_Linkr"},
@@ -271,7 +272,7 @@ var linkr = linkr || {
                                 tr.setAttribute('data-ajax-form-state','');
                                 tr.setAttribute('data-recenttrack-id','');
                                 tr.setAttribute('data-timestamp','');
-                                tr.innerHTML = '<td class="chartlist-play"><div class="chartlist-play-image"><a href="' + albumlink + '"><img title="' + albumtitle + '" src="' + albumcover + '" class="cover-art"></a></div></td><td class="chartlist-loved"><a href="' + albumlink.replace(/\/user\/[^\/]+\/library\//, '/') + '"><img src="' + GMC.getResourceURL('albumIcon')+ '" class="cover-art" alt="album" /></a></td><td class="chartlist-name"><span class="chartlist-ellipsis-wrap"><span class="chartlist-artists"><a href="' + artistlink + '" title="' + artistname + '">' + artistname + '</a></span><span class="artist-name-spacer"> — </span>' + albumCompoundLinkTag(artistname, artistlink, albumtitle, albumlink) + '</span></td><td class="chartlist-buylinks chartlist-focus-control-cell"><div class="lazy-buylinks focus-control"><button class="disclose-trigger lazy-buylinks-toggle" aria-expanded="false" data-lazy-buylink="" data-lazy-buylink-url="' + albumlink.replace(/\/user\/[^\/]+\/library\//, '/') + '/+partial/buylinks">Buy</button></div></td>' + (hasMorebuttons ? '<td class="chartlist-more chartlist-focus-control-cell"><div class="focus-control"></div></td>' : '') + '<td class="chartlist-timestamp"></td>';
+                                tr.innerHTML = '<td class="chartlist-play"><div class="chartlist-play-image"><a href="' + albumlink + '"><img title="' + albumtitle + '" src="' + albumcover + '" class="cover-art"></a></div></td><td class="chartlist-loved"><a href="' + albumlink.replace(/\/user\/[^\/]+\/library\//, '/') + '"><img src="' + GMC.getResourceUrl('albumIcon')+ '" class="cover-art" alt="album" /></a></td><td class="chartlist-name"><span class="chartlist-ellipsis-wrap"><span class="chartlist-artists"><a href="' + artistlink + '" title="' + artistname + '">' + artistname + '</a></span><span class="artist-name-spacer"> — </span>' + albumCompoundLinkTag(artistname, artistlink, albumtitle, albumlink) + '</span></td><td class="chartlist-buylinks chartlist-focus-control-cell"><div class="lazy-buylinks focus-control"><button class="disclose-trigger lazy-buylinks-toggle" aria-expanded="false" data-lazy-buylink="" data-lazy-buylink-url="' + albumlink.replace(/\/user\/[^\/]+\/library\//, '/') + '/+partial/buylinks">Buy</button></div></td>' + (hasMorebuttons ? '<td class="chartlist-more chartlist-focus-control-cell"><div class="focus-control"></div></td>' : '') + '<td class="chartlist-timestamp"></td>';
                                 linkr.log('Now trying to add tr...');
                                 tlists[j].insertBefore(tr, rows[i - 1]);
                                 linkr.log('and should be added now!?');
@@ -361,16 +362,14 @@ var linkr = linkr || {
         linkr.loadSettings();
         linkr.setupObserver();
         setInterval(linkr.setupObserver,2000);
-        // ☐ : http://www.fileformat.info/info/unicode/char/2610/index.htm // \u2610
-        // ☑ : http://www.fileformat.info/info/unicode/char/2611/index.htm // \u2611
-        GMC.registerMenuCommand((linkr.collagetype==='' ? ' \u2611 ' : ' \u2610 ')+"Album Collages - Disabled", linkr.collageOff /*, "D" */);
-        GMC.registerMenuCommand((linkr.collagetype==='7day' ? ' \u2611 ' : ' \u2610 ')+"Album Collages - 7 Days", linkr.collage7day /*, "7" */);
-        GMC.registerMenuCommand((linkr.collagetype==='1month' ? ' \u2611 ' : ' \u2610 ')+"Album Collages - 1 Month", linkr.collage1month /*, "1"*/);
-        GMC.registerMenuCommand((linkr.collagetype==='3month' ? ' \u2611 ' : ' \u2610 ')+"Album Collages - 3 Months", linkr.collage3month /*, "3"*/);
-        GMC.registerMenuCommand((linkr.collagetype==='6month' ? ' \u2611 ' : ' \u2610 ')+"Album Collages - 6 Months", linkr.collage6month /*, "6"*/);
-        GMC.registerMenuCommand((linkr.collagetype==='12month' ? ' \u2611 ' : ' \u2610 ')+"Album Collages - 1 Year", linkr.collage12month /*, "Y"*/);
-        GMC.registerMenuCommand((linkr.collagetype==='overall' ? ' \u2611 ' : ' \u2610 ')+"Album Collages - Overall", linkr.collageOverall /*, "O"*/);
-        GMC.registerMenuCommand((linkr.collapseTop===true ? ' \u2611 ' : ' \u2610 ')+"Collapse the top", linkr.toggleCollapseTop /*, "C"*/);
+        GMC.registerMenuCommand("Album Collages - Disabled", linkr.collageOff, {accessKey: "D", type: "radio", name: 'collage', checked: (linkr.collagetype==='')});
+        GMC.registerMenuCommand("Album Collages - 7 Days", linkr.collage7day, {accessKey: "7", type: "radio", name: 'collage', checked: (linkr.collagetype==='7day')});
+        GMC.registerMenuCommand("Album Collages - 1 Month", linkr.collage1month, {accessKey: "1", type: "radio", name: 'collage', checked: (linkr.collagetype==='1month')});
+        GMC.registerMenuCommand("Album Collages - 3 Months", linkr.collage3month, {accessKey: "3", type: "radio", name: 'collage', checked: (linkr.collagetype==='3month')});
+        GMC.registerMenuCommand("Album Collages - 6 Months", linkr.collage6month, {accessKey: "6", type: "radio", name: 'collage', checked: (linkr.collagetype==='6month')});
+        GMC.registerMenuCommand("Album Collages - 1 Year", linkr.collage12month, {accessKey: "Y", type: "radio", name: 'collage', checked: (linkr.collagetype==='12month')});
+        GMC.registerMenuCommand("Album Collages - Overall", linkr.collageOverall, {accessKey: "O", type: "radio", name: 'collage', checked: (linkr.collagetype==='overall')});
+        GMC.registerMenuCommand("Collapse the top", linkr.toggleCollapseTop , {accessKey: "C", type: "checkbox", checked: (linkr.collapseTop===true)});
 
         if (linkr.isProbablyGreasemonkey3X()) {
             // Prepare for Greasemonkey 3 to Greasemonkey 4 upgrade. Save setup in Web Storage:

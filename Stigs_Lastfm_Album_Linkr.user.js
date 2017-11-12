@@ -2,7 +2,7 @@
 // @name            Stig's Last.fm Album Linkr
 // @namespace       dk.rockland.userscript.lastfm.linkr
 // @description     Adding album links and headers to tracks on Last.Fm's recent plays listings - plus linkifying About Me section on profiles
-// @version         2017.11.11.1
+// @version         2017.11.12.0
 // @author          Stig Nygaard, http://www.rockland.dk
 // @homepageURL     http://www.rockland.dk/userscript/lastfm/linkr/
 // @supportURL      http://www.rockland.dk/userscript/lastfm/linkr/
@@ -23,7 +23,7 @@
 // @grant           GM_getValue
 // @grant           GM_setValue
 // @resource        albumIcon https://images1-focus-opensocial.googleusercontent.com/gadgets/proxy?url=http%3A%2F%2Fwww.rockland.dk%2Fimg%2Falbum244c.png&container=focus&resize_w=24&refresh=50000
-// @require         https://greasyfork.org/scripts/34527/code/GMCommonAPI.js?version=229618
+// @require         https://greasyfork.org/scripts/34527/code/GMCommonAPI.js?version=229909
 // @noframes
 // ==/UserScript==
 
@@ -355,7 +355,7 @@ var linkr = linkr || {
         } else if (typeof GM === 'object') {
             return false; // GM4
         }
-        return true; // well, play safe...
+        return false;
     },
     init: function () {
         linkr.log('Running init() on last.fm');
@@ -369,7 +369,7 @@ var linkr = linkr || {
         GMC.registerMenuCommand("Album Collages - 6 Months", linkr.collage6month, {accessKey: "6", type: "radio", name: 'collage', checked: (linkr.collagetype==='6month')});
         GMC.registerMenuCommand("Album Collages - 1 Year", linkr.collage12month, {accessKey: "Y", type: "radio", name: 'collage', checked: (linkr.collagetype==='12month')});
         GMC.registerMenuCommand("Album Collages - Overall", linkr.collageOverall, {accessKey: "O", type: "radio", name: 'collage', checked: (linkr.collagetype==='overall')});
-        GMC.registerMenuCommand("Collapse the top", linkr.toggleCollapseTop , {accessKey: "C", type: "checkbox", checked: (linkr.collapseTop===true)});
+        GMC.registerMenuCommand("Collapse the top", linkr.toggleCollapseTop , {accessKey: "C", type: "checkbox", checked: (linkr.collapseTop)});
 
         if (linkr.isProbablyGreasemonkey3X()) {
             // Prepare for Greasemonkey 3 to Greasemonkey 4 upgrade. Save setup in Web Storage:

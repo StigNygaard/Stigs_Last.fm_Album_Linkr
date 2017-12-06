@@ -2,7 +2,7 @@
 // @name            Stig's Last.fm Album Linkr
 // @namespace       dk.rockland.userscript.lastfm.linkr
 // @description     Adding album links and headers to tracks on Last.Fm's recent plays listings - plus linkifying About Me section on profiles
-// @version         2017.11.12.0
+// @version         2017.12.06.0
 // @author          Stig Nygaard, http://www.rockland.dk
 // @homepageURL     http://www.rockland.dk/userscript/lastfm/linkr/
 // @supportURL      http://www.rockland.dk/userscript/lastfm/linkr/
@@ -19,11 +19,12 @@
 // @match           *://*.lastfm.tr/*
 // @match           *://*.lastfm.zh/*
 // @grant           GM_registerMenuCommand
+// @grant           GM.getResourceUrl
 // @grant           GM_getResourceURL
 // @grant           GM_getValue
 // @grant           GM_setValue
 // @resource        albumIcon https://images1-focus-opensocial.googleusercontent.com/gadgets/proxy?url=http%3A%2F%2Fwww.rockland.dk%2Fimg%2Falbum244c.png&container=focus&resize_w=24&refresh=50000
-// @require         https://greasyfork.org/scripts/34527/code/GMCommonAPI.js?version=229909
+// @require         https://greasyfork.org/scripts/34527/code/GMCommonAPI.js?version=235354
 // @noframes
 // ==/UserScript==
 
@@ -35,8 +36,8 @@
  *      https://github.com/StigNygaard/Stigs_Last.fm_Album_Linkr
  *      https://www.last.fm/user/rockland
  *
- *      Should work with all popular browsers and userscript managers. Compatibility with
- *      the new/upcoming Greasemonkey 4 WebExtension is done with the help of GM Common Library:
+ *      Should work with all popular browsers and userscript managers. Compatibility with the new
+ *      Greasemonkey 4 WebExtension and Firefox 57+ is done with the help of GM Common Library:
  *
  *      https://github.com/StigNygaard/GMCommonAPI.js
  *      https://greasyfork.org/scripts/34527-gmcommonapi-js
@@ -82,12 +83,12 @@ var linkr = linkr || {
         }
     },
     loadSettings: function() {
-        linkr.collagetype = (''+GMC.getValue('collagetype', '')); // tapmusic collage
-        linkr.collapseTop = ((''+GMC.getValue('collapseTop', 'false'))==='true');
+        linkr.collagetype = (String(GMC.getValue('collagetype', ''))); // tapmusic collage
+        linkr.collapseTop = (String(GMC.getValue('collapseTop', 'false'))==='true');
     },
     saveSettings: function() {
-        GMC.setValue('collagetype', ''+linkr.collagetype );
-        GMC.setValue('collapseTop', ''+linkr.collapseTop );
+        GMC.setValue('collagetype', String(linkr.collagetype));
+        GMC.setValue('collapseTop', String(linkr.collapseTop));
         location.reload(true);
     },
     collageOff: function() {
@@ -346,17 +347,6 @@ var linkr = linkr || {
             }
         }
     },
-    isProbablyGreasemonkey3X: function() {
-        if (navigator.userAgent.toLowerCase().indexOf('firefox') === -1) {
-            return false; // NOT Firefox or Seamonkey => NOT GreaseMonkey
-        }
-        if (typeof GM_info === 'object' && typeof GM_info.script === 'object') {
-            return (typeof GM_info.script.author === 'undefined' && typeof GM_info.version === 'string' && GM_info.version.substring(0,2) === '3.'); // GM3?
-        } else if (typeof GM === 'object') {
-            return false; // GM4
-        }
-        return false;
-    },
     init: function () {
         linkr.log('Running init() on last.fm');
         linkr.loadSettings();
@@ -370,12 +360,6 @@ var linkr = linkr || {
         GMC.registerMenuCommand("Album Collages - 1 Year", linkr.collage12month, {accessKey: "Y", type: "radio", name: 'collage', checked: (linkr.collagetype==='12month')});
         GMC.registerMenuCommand("Album Collages - Overall", linkr.collageOverall, {accessKey: "O", type: "radio", name: 'collage', checked: (linkr.collagetype==='overall')});
         GMC.registerMenuCommand("Collapse the top", linkr.toggleCollapseTop , {accessKey: "C", type: "checkbox", checked: (linkr.collapseTop)});
-
-        if (linkr.isProbablyGreasemonkey3X()) {
-            // Prepare for Greasemonkey 3 to Greasemonkey 4 upgrade. Save setup in Web Storage:
-            GMC.setLocalStorageValue('collagetype', ''+linkr.collagetype );
-            GMC.setLocalStorageValue('collapseTop', ''+linkr.collapseTop );
-        }
     }
 };
 

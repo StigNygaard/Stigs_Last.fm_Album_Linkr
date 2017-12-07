@@ -2,7 +2,7 @@
 // @name            Stig's Last.fm Album Linkr
 // @namespace       dk.rockland.userscript.lastfm.linkr
 // @description     Adding album links and headers to tracks on Last.Fm's recent plays listings - plus linkifying About Me section on profiles
-// @version         2017.12.06.0
+// @version         2017.12.07.0
 // @author          Stig Nygaard, http://www.rockland.dk
 // @homepageURL     http://www.rockland.dk/userscript/lastfm/linkr/
 // @supportURL      http://www.rockland.dk/userscript/lastfm/linkr/
@@ -24,7 +24,7 @@
 // @grant           GM_getValue
 // @grant           GM_setValue
 // @resource        albumIcon https://images1-focus-opensocial.googleusercontent.com/gadgets/proxy?url=http%3A%2F%2Fwww.rockland.dk%2Fimg%2Falbum244c.png&container=focus&resize_w=24&refresh=50000
-// @require         https://greasyfork.org/scripts/34527/code/GMCommonAPI.js?version=235354
+// @require         https://greasyfork.org/scripts/34527/code/GMCommonAPI.js?version=229909
 // @noframes
 // ==/UserScript==
 
@@ -46,6 +46,7 @@
 var linkr = linkr || {
     // CHANGELOG - The most important updates/versions:
     changelog: [
+        {version: '2017.11.11.1', description: "Ups, a small update of GMCommonAPI yesterday broke something in Chrome. Reverting version used."},
         {version: '2017.11.11.1', description: "Menu tuning."},
         {version: '2017.10.26.1', description: "Now fully compatible with the upcoming Greasemonkey 4 WebExtension (Use webpage context-menu for options in GM4/Firefox)."},
         {version: '2017.08.07.0', description: "Separate links for short and long album titles ('Special Edition', 'Remastered' etc.)"},

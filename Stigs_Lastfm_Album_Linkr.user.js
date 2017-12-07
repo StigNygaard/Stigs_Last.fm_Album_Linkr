@@ -2,7 +2,7 @@
 // @name            Stig's Last.fm Album Linkr
 // @namespace       dk.rockland.userscript.lastfm.linkr
 // @description     Adding album links and headers to tracks on Last.Fm's recent plays listings - plus linkifying About Me section on profiles
-// @version         2017.12.07.0
+// @version         2017.12.07.3
 // @author          Stig Nygaard, http://www.rockland.dk
 // @homepageURL     http://www.rockland.dk/userscript/lastfm/linkr/
 // @supportURL      http://www.rockland.dk/userscript/lastfm/linkr/
@@ -24,7 +24,7 @@
 // @grant           GM_getValue
 // @grant           GM_setValue
 // @resource        albumIcon https://images1-focus-opensocial.googleusercontent.com/gadgets/proxy?url=http%3A%2F%2Fwww.rockland.dk%2Fimg%2Falbum244c.png&container=focus&resize_w=24&refresh=50000
-// @require         https://greasyfork.org/scripts/34527/code/GMCommonAPI.js?version=229909
+// @require         https://greasyfork.org/scripts/34527/code/GMCommonAPI.js?version=235553
 // @noframes
 // ==/UserScript==
 

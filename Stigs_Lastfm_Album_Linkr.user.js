@@ -2,7 +2,7 @@
 // @name            Stig's Last.fm Album Linkr
 // @namespace       dk.rockland.userscript.lastfm.linkr
 // @description     Adding album links and headers to tracks on Last.Fm's recent plays listings - plus linkifying About Me section on profiles
-// @version         2017.12.07.3
+// @version         2017.12.13.0
 // @author          Stig Nygaard, http://www.rockland.dk
 // @homepageURL     http://www.rockland.dk/userscript/lastfm/linkr/
 // @supportURL      http://www.rockland.dk/userscript/lastfm/linkr/
@@ -23,7 +23,7 @@
 // @grant           GM_getResourceURL
 // @grant           GM_getValue
 // @grant           GM_setValue
-// @resource        albumIcon https://images1-focus-opensocial.googleusercontent.com/gadgets/proxy?url=http%3A%2F%2Fwww.rockland.dk%2Fimg%2Falbum244c.png&container=focus&resize_w=24&refresh=50000
+// @resource        albumIcon https://images1-focus-opensocial.googleusercontent.com/gadgets/proxy?url=http%3A%2F%2Fwww.rockland.dk%2Fimg%2Falbum244c.png&container=focus&resize_w=24&rewriteMime=image%2fpng&refresh=50000
 // @require         https://greasyfork.org/scripts/34527/code/GMCommonAPI.js?version=235553
 // @noframes
 // ==/UserScript==
@@ -46,7 +46,8 @@
 var linkr = linkr || {
     // CHANGELOG - The most important updates/versions:
     changelog: [
-        {version: '2017.11.11.1', description: "Ups, a small update of GMCommonAPI yesterday broke something in Chrome. Reverting version used."},
+        {version: '2017.12.13.0', description: "Fixing cover images in album-headers."},
+        {version: '2017.12.11.1', description: "Ups, a small update of GMCommonAPI broke something in Chrome/Tampermonkey. Reverting version used."},
         {version: '2017.11.11.1', description: "Menu tuning."},
         {version: '2017.10.26.1', description: "Now fully compatible with the upcoming Greasemonkey 4 WebExtension (Use webpage context-menu for options in GM4/Firefox)."},
         {version: '2017.08.07.0', description: "Separate links for short and long album titles ('Special Edition', 'Remastered' etc.)"},
@@ -147,23 +148,34 @@ var linkr = linkr || {
         function splitAlbumTitle(title) {
             title = title.trim();
             var rtval = {full:title, basic:title};
-            var regs = [/^([^$]*[^-\s])(\s(-\s)?)([\(\[]?[\w\s]+\sEdition[\w\s]*[\)\]]?)$/i,
-                        /^([^$]*[^-\s])(\s(-\s)?)([\(\[]?[\w\s]+\sVersion[\w\s]*[\)\]]?)$/i,
-                        /^([^$]*[^-\s])(\s(-\s)?)([\(\[]?Deluxe[\w\s]*[\)\]]?)$/i,
-                        /^([^$]*[^-\s])(\s(-\s)?)([\(\[]?Remastered[\s\d]*[\)\]]?)$/i,
-                        /^([^$]*[^-\s])(\s(-\s)?)([\(\[]?EP[\)\]]?)$/i,
-                        /^([^$]*[^-\s])(\s(-\s)?)([\(\[]?Explicit[\)\]]?)$/i];
+            var regs =  [
+                            /^([^$]*[^-\s])(\s-\s)(\w[\w\s]+\sEdition[\w\s]*)$/i,
+                            /^([^$]*[^-\s])(\s-\s)(\w[\w\s]+\sVersion[\w\s]*)$/i,
+                            /^([^$]*[^-\s])(\s-\s)(\w[\w\s]+\sDeluxe[\w\s]*)$/i,
+                            /^([^$]*[^-\s])(\s-\s)(\w[\w\s]+\sRemastered[\w\s]*)$/i,
+                            /^([^$]*[^-\s])(\s-\s)(Deluxe[\w\s]*)$/i,
+                            /^([^$]*[^-\s])(\s-\s)(Remastered[\w\s]*)$/i,
+                            /^([^$]*[^-\s])(\s-\s)(EP[\w\s]*)$/i,
+                            /^([^$]*[^-\s])(\s-\s)(Explicit[\w\s]*)$/i,
+                            /^([^$]*[^-\s])(\s)([\(\[][\w\s]+\sEdition[\w\s]*[\)\]])$/i,
+                            /^([^$]*[^-\s])(\s)([\(\[][\w\s]+\sVersion[\w\s]*[\)\]])$/i,
+                            /^([^$]*[^-\s])(\s)([\(\[][\w\s]+\sDeluxe[\w\s]*[\)\]])$/i,
+                            /^([^$]*[^-\s])(\s)([\(\[][\w\s]+\sRemastered[\w\s]*[\)\]])$/i,
+                            /^([^$]*[^-\s])(\s)([\(\[]Deluxe[\w\s]*[\)\]])$/i,
+                            /^([^$]*[^-\s])(\s)([\(\[]Remastered[\w\s]*[\)\]])$/i,
+                            /^([^$]*[^-\s])(\s)([\(\[]EP[\)\]])$/i,
+                            /^([^$]*[^-\s])(\s)([\(\[]Explicit[\)\]])$/i
+                        ];
             for (var i=0; i<regs.length; i++) {
                 var m = title.match(regs[i]);
                 // 0: full (= basic+spacer+extension)
                 // 1: basic
                 // 2: spacer
-                // 3: (ignore)
-                // 4: extension
-                if (m!==null && m.length===5) {
+                // 3: extension
+                if (m!==null && m.length===4) {
                     rtval.basic = m[1];
                     rtval.spacer = m[2];
-                    rtval.extension = m[4];
+                    rtval.extension = m[3];
                     break; // return rtval;
                 }
             }
@@ -230,13 +242,13 @@ var linkr = linkr || {
                             // TRY to get albumartist right even when misc. featured artists on album tracks:
                             var bestindex = i-1;
                             var artistlinkelem = rows[bestindex].querySelector('td.chartlist-name span.chartlist-artists > a');
-                            var albumcoverelem = rows[bestindex].querySelector('td.chartlist-play a > img');
+                            var albumcoverelem = rows[bestindex].querySelector('td.chartlist-play img');
                             var artistname = artistlinkelem.textContent;
                             var tracks = [{absindex: bestindex, artistname: artistname, coverurl: (albumcoverelem ? albumcoverelem.src : null)}];
                             for (var k=i; k < rows.length; k++) {
                                 if (altvalue(rows[i-1]).toLowerCase() !== altvalue(rows[k]).toLowerCase()) break; // new album
                                 artistlinkelem = rows[k].querySelector('td.chartlist-name span.chartlist-artists > a');
-                                albumcoverelem = rows[k].querySelector('td.chartlist-play a > img');
+                                albumcoverelem = rows[k].querySelector('td.chartlist-play img');
                                 tracks.push({absindex: k, artistname: artistlinkelem.textContent, coverurl: (albumcoverelem ? albumcoverelem.src : null)});
                                 if (rows[k].querySelector('td.chartlist-name span.chartlist-artists > a').textContent.length < artistname.length) {
                                     bestindex = k;
@@ -246,7 +258,7 @@ var linkr = linkr || {
                             }
                             var artistlink = rows[bestindex].querySelector('td.chartlist-name span.chartlist-artists > a');
                             var albumtitle = altvalue(rows[bestindex]);
-                            var albumcover = rows[bestindex].querySelector('td.chartlist-play a > img');
+                            var albumcover = rows[bestindex].querySelector('td.chartlist-play img');
                             if (albumcover) albumcover=albumcover.src;
                             if (artistlink) {
                                 if (tracks.reduce(function (x, y) {

@@ -2,7 +2,7 @@
 // @name            Stig's Last.fm Album Linkr
 // @namespace       dk.rockland.userscript.lastfm.linkr
 // @description     Adding album links and headers to tracks on Last.Fm's recent plays listings - plus linkifying About Me section on profiles
-// @version         2017.12.13.0
+// @version         2017.12.13.3
 // @author          Stig Nygaard, http://www.rockland.dk
 // @homepageURL     http://www.rockland.dk/userscript/lastfm/linkr/
 // @supportURL      http://www.rockland.dk/userscript/lastfm/linkr/
@@ -191,7 +191,7 @@ var linkr = linkr || {
             }
         }
         linkr.log('Running linking()... ', linkr.INFO);
-        var l = document.querySelectorAll('table.chartlist tbody tr div > img');
+        var l = document.querySelectorAll('table.chartlist tbody tr .cover-art >  img');
         var tr;
         var albumlink;
         for (var i=0; i < l.length; i++) {
@@ -209,8 +209,9 @@ var linkr = linkr || {
                     linkr.log('giving albumlink='+albumlink);
                     var link = document.createElement('a');
                     link.setAttribute('href', albumlink);
-                    parent.replaceChild(link, l[i]);
-                    link.appendChild(l[i]);
+                    // *** Currently NOT working (CSP error?), so disabled: ***
+                    // parent.replaceChild(link, l[i]);
+                    // link.appendChild(l[i]);
                 } else {
                     linkr.log('Artist link not found');
                 }
@@ -276,7 +277,7 @@ var linkr = linkr || {
                                     } else {
                                         // Looks like we have a "Various Artists"...
                                         artistname = 'Various Artists';
-                                        artistlink = 'http://www.last.fm/music/Various+Artists';
+                                        artistlink = '/music/Various+Artists';
                                         linkr.log('*** [far after split()]: Seems "' + albumtitle + '" is a "Various Artists" album...');
                                     }
                                 }

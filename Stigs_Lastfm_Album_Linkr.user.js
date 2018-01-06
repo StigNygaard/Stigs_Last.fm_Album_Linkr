@@ -2,7 +2,7 @@
 // @name            Stig's Last.fm Album Linkr
 // @namespace       dk.rockland.userscript.lastfm.linkr
 // @description     Adding album links and headers to tracks on Last.Fm's recent plays listings - plus linkifying About Me section on profiles
-// @version         2017.12.13.3
+// @version         2018.01.06.0
 // @author          Stig Nygaard, http://www.rockland.dk
 // @homepageURL     http://www.rockland.dk/userscript/lastfm/linkr/
 // @supportURL      http://www.rockland.dk/userscript/lastfm/linkr/
@@ -24,7 +24,7 @@
 // @grant           GM_getValue
 // @grant           GM_setValue
 // @resource        albumIcon https://images1-focus-opensocial.googleusercontent.com/gadgets/proxy?url=http%3A%2F%2Fwww.rockland.dk%2Fimg%2Falbum244c.png&container=focus&resize_w=24&rewriteMime=image%2fpng&refresh=50000
-// @require         https://greasyfork.org/scripts/34527/code/GMCommonAPI.js?version=235553
+// @require         https://greasyfork.org/scripts/34527/code/GMCommonAPI.js?version=237846
 // @noframes
 // ==/UserScript==
 
@@ -46,9 +46,8 @@
 var linkr = linkr || {
     // CHANGELOG - The most important updates/versions:
     changelog: [
+        {version: '2018.01.06.0', description: "Making the Linkify-feature optional."},
         {version: '2017.12.13.0', description: "Fixing cover images in album-headers."},
-        {version: '2017.12.11.1', description: "Ups, a small update of GMCommonAPI broke something in Chrome/Tampermonkey. Reverting version used."},
-        {version: '2017.11.11.1', description: "Menu tuning."},
         {version: '2017.10.26.1', description: "Now fully compatible with the upcoming Greasemonkey 4 WebExtension (Use webpage context-menu for options in GM4/Firefox)."},
         {version: '2017.08.07.0', description: "Separate links for short and long album titles ('Special Edition', 'Remastered' etc.)"},
         {version: '2017.08.01.1', description: "Moving development source to a GitHub repository: https://github.com/StigNygaard/Stigs_Last.fm_Album_Linkr"},
@@ -65,6 +64,7 @@ var linkr = linkr || {
     linking_running: false,
     collagetype: '',
     collapseTop: false,
+    linkifyEnabled: true,
     log: function(s, info) {
         if ((info && window.console) || (linkr.DEBUG && window.console)) {
             window.console.log('*Linkr* '+s);
@@ -87,10 +87,12 @@ var linkr = linkr || {
     loadSettings: function() {
         linkr.collagetype = (String(GMC.getValue('collagetype', ''))); // tapmusic collage
         linkr.collapseTop = (String(GMC.getValue('collapseTop', 'false'))==='true');
+        linkr.linkifyEnabled = (String(GMC.getValue('linkifyEnabled', 'true'))==='true');
     },
     saveSettings: function() {
         GMC.setValue('collagetype', String(linkr.collagetype));
         GMC.setValue('collapseTop', String(linkr.collapseTop));
+        GMC.setValue('linkifyEnabled', String(linkr.linkifyEnabled));
         location.reload(true);
     },
     collageOff: function() {
@@ -125,6 +127,10 @@ var linkr = linkr || {
         linkr.collapseTop = !linkr.collapseTop;
         linkr.saveSettings();
     },
+    toggleLinkifyEnabled: function() {
+        linkr.linkifyEnabled = !linkr.linkifyEnabled;
+        linkr.saveSettings();
+    },
     linking: function (mutations) {
         if(linkr.linking_running) return;
         linkr.linking_running = true;
@@ -152,17 +158,17 @@ var linkr = linkr || {
                             /^([^$]*[^-\s])(\s-\s)(\w[\w\s]+\sEdition[\w\s]*)$/i,
                             /^([^$]*[^-\s])(\s-\s)(\w[\w\s]+\sVersion[\w\s]*)$/i,
                             /^([^$]*[^-\s])(\s-\s)(\w[\w\s]+\sDeluxe[\w\s]*)$/i,
-                            /^([^$]*[^-\s])(\s-\s)(\w[\w\s]+\sRemastered[\w\s]*)$/i,
+                            /^([^$]*[^-\s])(\s-\s)(\w[\w\s]+\sRemaster[\w\s]*)$/i,
                             /^([^$]*[^-\s])(\s-\s)(Deluxe[\w\s]*)$/i,
-                            /^([^$]*[^-\s])(\s-\s)(Remastered[\w\s]*)$/i,
+                            /^([^$]*[^-\s])(\s-\s)(Remaster[\w\s]*)$/i,
                             /^([^$]*[^-\s])(\s-\s)(EP[\w\s]*)$/i,
                             /^([^$]*[^-\s])(\s-\s)(Explicit[\w\s]*)$/i,
                             /^([^$]*[^-\s])(\s)([\(\[][\w\s]+\sEdition[\w\s]*[\)\]])$/i,
                             /^([^$]*[^-\s])(\s)([\(\[][\w\s]+\sVersion[\w\s]*[\)\]])$/i,
                             /^([^$]*[^-\s])(\s)([\(\[][\w\s]+\sDeluxe[\w\s]*[\)\]])$/i,
-                            /^([^$]*[^-\s])(\s)([\(\[][\w\s]+\sRemastered[\w\s]*[\)\]])$/i,
+                            /^([^$]*[^-\s])(\s)([\(\[][\w\s]+\sRemaster[\w\s]*[\)\]])$/i,
                             /^([^$]*[^-\s])(\s)([\(\[]Deluxe[\w\s]*[\)\]])$/i,
-                            /^([^$]*[^-\s])(\s)([\(\[]Remastered[\w\s]*[\)\]])$/i,
+                            /^([^$]*[^-\s])(\s)([\(\[]Remaster[\w\s]*[\)\]])$/i,
                             /^([^$]*[^-\s])(\s)([\(\[]EP[\)\]])$/i,
                             /^([^$]*[^-\s])(\s)([\(\[]Explicit[\)\]])$/i
                         ];
@@ -212,6 +218,12 @@ var linkr = linkr || {
                     // *** Currently NOT working (CSP error?), so disabled: ***
                     // parent.replaceChild(link, l[i]);
                     // link.appendChild(l[i]);
+                    /*
+                    if (parent.parentNode.lastChild.nodeType!=='a') {
+                        parent.insertChildAfterThis(<a>) or
+                        parent.parentNode.insertAsLastChild(<a>)
+                    }
+                    */
                 } else {
                     linkr.log('Artist link not found');
                 }
@@ -339,10 +351,11 @@ var linkr = linkr || {
         return(s.replace(url, '$1' + a1 + '$2' + a2 + '$2' + a3 + '$3$4'));
     },
     linkifySidebar: function() {
-        var a = document.querySelectorAll('.about-me-sidebar p');
-        for(var i=0;i<a.length;i++)
-        {
-            a[i].innerHTML = linkr.linkifyStr(a[i].innerHTML);
+        if (linkr.linkifyEnabled) {
+            var a = document.querySelectorAll('.about-me-sidebar p');
+            for (var i = 0; i < a.length; i++) {
+                a[i].innerHTML = linkr.linkifyStr(a[i].innerHTML);
+            }
         }
     },
     tapmusicSidebar: function() {
@@ -373,6 +386,7 @@ var linkr = linkr || {
         GMC.registerMenuCommand("Album Collages - 6 Months", linkr.collage6month, {accessKey: "6", type: "radio", name: 'collage', checked: (linkr.collagetype==='6month')});
         GMC.registerMenuCommand("Album Collages - 1 Year", linkr.collage12month, {accessKey: "Y", type: "radio", name: 'collage', checked: (linkr.collagetype==='12month')});
         GMC.registerMenuCommand("Album Collages - Overall", linkr.collageOverall, {accessKey: "O", type: "radio", name: 'collage', checked: (linkr.collagetype==='overall')});
+        GMC.registerMenuCommand("Linkify About Me section", linkr.toggleLinkifyEnabled , {accessKey: "L", type: "checkbox", checked: (linkr.linkifyEnabled)});
         GMC.registerMenuCommand("Collapse the top", linkr.toggleCollapseTop , {accessKey: "C", type: "checkbox", checked: (linkr.collapseTop)});
     }
 };

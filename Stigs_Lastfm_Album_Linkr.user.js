@@ -2,7 +2,7 @@
 // @name            Stig's Last.fm Album Linkr
 // @namespace       dk.rockland.userscript.lastfm.linkr
 // @description     Adding album links and headers to tracks on Last.Fm's recent plays listings - plus linkifying About Me section on profiles
-// @version         2018.01.06.0
+// @version         2018.01.14.0
 // @author          Stig Nygaard, http://www.rockland.dk
 // @homepageURL     http://www.rockland.dk/userscript/lastfm/linkr/
 // @supportURL      http://www.rockland.dk/userscript/lastfm/linkr/
@@ -170,8 +170,9 @@ var linkr = linkr || {
                             /^([^$]*[^-\s])(\s)([\(\[]Deluxe[\w\s]*[\)\]])$/i,
                             /^([^$]*[^-\s])(\s)([\(\[]Remaster[\w\s]*[\)\]])$/i,
                             /^([^$]*[^-\s])(\s)([\(\[]EP[\)\]])$/i,
-                            /^([^$]*[^-\s])(\s)([\(\[]Explicit[\)\]])$/i
-                        ];
+                            /^([^$]*[^-\s])(\s)([\(\[]Explicit[\)\]])$/i,
+                            /^([^$]*[^-\s])(\s)(EP[\d\s]*)$/i
+            ];
             for (var i=0; i<regs.length; i++) {
                 var m = title.match(regs[i]);
                 // 0: full (= basic+spacer+extension)
@@ -299,7 +300,7 @@ var linkr = linkr || {
                                 tr.setAttribute('data-ajax-form-state','');
                                 tr.setAttribute('data-recenttrack-id','');
                                 tr.setAttribute('data-timestamp','');
-                                tr.innerHTML = '<td class="chartlist-play"><div class="chartlist-play-image"><a href="' + albumlink + '"><img title="' + albumtitle + '" src="' + albumcover + '" class="cover-art"></a></div></td><td class="chartlist-loved"><a href="' + albumlink.replace(/\/user\/[^\/]+\/library\//, '/') + '"><img src="' + GMC.getResourceUrl('albumIcon')+ '" class="cover-art" alt="album" /></a></td><td class="chartlist-name"><span class="chartlist-ellipsis-wrap"><span class="chartlist-artists"><a href="' + artistlink + '" title="' + artistname + '">' + artistname + '</a></span><span class="artist-name-spacer"> — </span>' + albumCompoundLinkTag(artistname, artistlink, albumtitle, albumlink) + '</span></td><td class="chartlist-buylinks chartlist-focus-control-cell"><div class="lazy-buylinks focus-control"><button class="disclose-trigger lazy-buylinks-toggle" aria-expanded="false" data-lazy-buylink="" data-lazy-buylink-url="' + albumlink.replace(/\/user\/[^\/]+\/library\//, '/') + '/+partial/buylinks">Buy</button></div></td>' + (hasMorebuttons ? '<td class="chartlist-more chartlist-focus-control-cell"><div class="focus-control"></div></td>' : '') + '<td class="chartlist-timestamp"></td>';
+                                tr.innerHTML = '<td class="chartlist-play"><div class="chartlist-play-image"><a href="' + albumlink + '"><img title="' + albumtitle + '" src="' + albumcover + '" class="cover-art"></a></div></td><td class="chartlist-loved"><a href="' + albumlink.replace(/\/user\/[^\/]+\/library\//, '/') + '"><img src="' + GMC.getResourceUrl('albumIcon')+ '" style="width:24px;height:24px" alt="album" /></a></td><td class="chartlist-name"><span class="chartlist-ellipsis-wrap"><span class="chartlist-artists"><a href="' + artistlink + '" title="' + artistname + '">' + artistname + '</a></span><span class="artist-name-spacer"> — </span>' + albumCompoundLinkTag(artistname, artistlink, albumtitle, albumlink) + '</span></td><td class="chartlist-buylinks chartlist-focus-control-cell"><div class="lazy-buylinks focus-control"><button class="disclose-trigger lazy-buylinks-toggle" aria-expanded="false" data-lazy-buylink="" data-lazy-buylink-url="' + albumlink.replace(/\/user\/[^\/]+\/library\//, '/') + '/+partial/buylinks">Buy</button></div></td>' + (hasMorebuttons ? '<td class="chartlist-more chartlist-focus-control-cell"><div class="focus-control"></div></td>' : '') + '<td class="chartlist-timestamp"></td>';
                                 linkr.log('Now trying to add tr...');
                                 tlists[j].insertBefore(tr, rows[i - 1]);
                                 linkr.log('and should be added now!?');

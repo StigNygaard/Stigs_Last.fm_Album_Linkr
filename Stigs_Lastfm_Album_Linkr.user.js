@@ -2,7 +2,7 @@
 // @name            Stig's Last.fm Album Linkr
 // @namespace       dk.rockland.userscript.lastfm.linkr
 // @description     Adding album links and headers to tracks on Last.Fm's recent plays listings - plus linkifying About Me section on profiles
-// @version         2018.01.14.0
+// @version         2018.09.13.0
 // @author          Stig Nygaard, http://www.rockland.dk
 // @homepageURL     http://www.rockland.dk/userscript/lastfm/linkr/
 // @supportURL      http://www.rockland.dk/userscript/lastfm/linkr/
@@ -46,6 +46,7 @@
 var linkr = linkr || {
     // CHANGELOG - The most important updates/versions:
     changelog: [
+        {version: '2018.09.13.0', description: "Minor code optimizations."},
         {version: '2018.01.06.0', description: "Making the Linkify-feature optional."},
         {version: '2017.12.13.0', description: "Fixing cover images in album-headers."},
         {version: '2017.10.26.1', description: "Now fully compatible with the upcoming Greasemonkey 4 WebExtension (Use webpage context-menu for options in GM4/Firefox)."},
@@ -149,7 +150,7 @@ var linkr = linkr || {
         function containing(s, sub) {
             s = s.trim().replace(/^the\s/gi, "").replace(/\,\sthe$/gi,"").replace(" & ", " and ").trim();
             sub = sub.trim().replace(/^the\s/gi, "").replace(/\,\sthe$/gi,"").replace(" & ", " and ").trim();
-            return (s.toLocaleUpperCase().indexOf(sub.toLocaleUpperCase()) > -1);
+            return (s.toLocaleUpperCase().includes(sub.toLocaleUpperCase()));
         }
         function splitAlbumTitle(title) {
             title = title.trim();
@@ -277,7 +278,7 @@ var linkr = linkr || {
                             if (artistlink) {
                                 if (tracks.reduce(function (x, y) {
                                         return x && containing(y.artistname, artistname);
-                                    }, true)) { //y.artistname.indexOf(artistname)>-1
+                                    }, true)) { //y.artistname.includes(artistname)
                                     artistlink = artistlink.href;
                                     linkr.log('*** [before split()]: All albumtracks on "' + albumtitle + '" has "' + artistname + '" contained in trackartists');
                                 } else {
@@ -368,7 +369,7 @@ var linkr = linkr || {
                 linkr.log('tapmusicSidebar(): url match med userid=' + result[1]);
                 var b = document.querySelector('.stationlinks');
                 if (b && !document.getElementById('tapmusic')) {
-                    b.insertAdjacentHTML('beforeend', '<div style="margin:1em 0;width:300px" id="tapmusic"><div class="tapcollage"><img src="https://images1-focus-opensocial.googleusercontent.com/gadgets/proxy?url=http%3A%2F%2Fwww.tapmusic.net%2Fcollage.php%3Fuser%3D' + result[1] + '%26type%3D'+linkr.collagetype+'%26size%3D2x6&container=focus&resize_w=300&refresh=3600" alt="If this text is visible, tapmusic.net might be slow or not responding - or the profile you are looking at does not have recent scrobbles to generate a collage from... But sometimes a simple re-load of page also helps." style="display:block;margin:0;padding:0;width:300px;height:900px" /></div><div class="tapcredit"><em title="Album collage by www.tapmusic.net/lastfm - Embedded by Stig\'s Last.fm Album Linkr">Album collage by <a href="http://www.tapmusic.net/lastfm/">www.tapmusic.net/lastfm/</a></em></div></div>');
+                    b.insertAdjacentHTML('beforeend', '<div style="margin:1em 0;width:300px" id="tapmusic"><div class="tapcollage"><img src="https://images1-focus-opensocial.googleusercontent.com/gadgets/proxy?url=http%3A%2F%2Fwww.tapmusic.net%2Fcollage.php%3Fuser%3D' + result[1] + '%26type%3D'+linkr.collagetype+'%26size%3D2x6&container=focus&resize_w=300&refresh=3600" alt="If this text is visible, tapmusic.net might be slow or not responding - or the profile you are looking at does not have recent scrobbles to generate a collage from... But sometimes a simple re-load of page also helps." style="display:block;margin:0;padding:0;width:300px;height:900px" decoding="async" /></div><div class="tapcredit"><em title="Album collage by www.tapmusic.net/lastfm - Embedded by Stig\'s Last.fm Album Linkr">Album collage by <a href="http://www.tapmusic.net/lastfm/">www.tapmusic.net/lastfm/</a></em></div></div>');
                 }
             } else {
                 linkr.log('tapmusicSidebar(): returnerer false! reg-pattern fandt ikke match i pathname=' + window.location.pathname);

@@ -46,6 +46,7 @@
 var linkr = linkr || {
     // CHANGELOG - The most important updates/versions:
     changelog: [
+        {version: '2019.02.23.0', description: "Update/fix for Collapse Top feature."},
         {version: '2018.09.13.0', description: "Minor code optimizations."},
         {version: '2018.01.06.0', description: "Making the Linkify-feature optional."},
         {version: '2017.12.13.0', description: "Fixing cover images in album-headers."},
@@ -78,7 +79,7 @@ var linkr = linkr || {
             style.id = 'linkrStyle';
             style.innerHTML = '#tapmusic {font-style:italic; font-size:12px; color:rgb(153,153,153)} .tapcollage {line-height:1.5; animation:fadein 15s; animation-timing-function:ease-in;} .tapcredit{line-height:1.3} @keyframes fadein {from{color:rgba(153,153,153,0);} to{color:rgba(153,153,153,1);}} ' +
                               'tr.albumlink-row,  tr.albumlink-row > td {background-color:#f1cccc !important} tr.albumlink-row > td.chartlist-name {font-style:italic} tr.albumlink-row > td.chartlist-name > span > span {font-style:normal} tr.albumlink-row:hover, tr.albumlink-row:hover > td {background-color:#f9d4d4 !important;} .albumextension, .albumextension .link-block-target {font-style:italic; color:#707070 !important}' +
-                              (linkr.collapseTop ? 'div[id^="gpt-slot-"] {display:none}' : '');
+                              (linkr.collapseTop ? 'div[id^="gpt-slot-"], #leader_top {display:none}' : '');
             document.getElementsByTagName('head')[0].appendChild(style);
             linkr.log('linkrStyle has been ADDED');
         } else {

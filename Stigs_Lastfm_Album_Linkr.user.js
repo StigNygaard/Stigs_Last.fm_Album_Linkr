@@ -2,7 +2,7 @@
 // @name            Stig's Last.fm Album Linkr
 // @namespace       dk.rockland.userscript.lastfm.linkr
 // @description     Adding album links and headers to tracks on Last.Fm's recent plays listings - plus linkifying About Me section on profiles
-// @version         2019.03.01.1
+// @version         2019.04.26.1
 // @author          Stig Nygaard, http://www.rockland.dk
 // @homepageURL     http://www.rockland.dk/userscript/lastfm/linkr/
 // @supportURL      http://www.rockland.dk/userscript/lastfm/linkr/
@@ -23,6 +23,7 @@
 // @grant           GM_getResourceURL
 // @grant           GM_getValue
 // @grant           GM_setValue
+// @run-at          document-start
 // @resource        albumIcon https://images1-focus-opensocial.googleusercontent.com/gadgets/proxy?url=http%3A%2F%2Fwww.rockland.dk%2Fimg%2Falbum244c.png&container=focus&resize_w=24&rewriteMime=image%2fpng&refresh=50000
 // @require         https://greasyfork.org/scripts/34527/code/GMCommonAPI.js?version=237846
 // @noframes
@@ -46,16 +47,13 @@
 var linkr = linkr || {
     // CHANGELOG - The most important updates/versions:
     changelog: [
+        {version: '2019.04.26.0', description: "Probably/hopefully fixing that tapmusic collage could delay loading of some other pageelements?"},
         {version: '2019.03.01.1', description: "Remove extra (mobile ad?) line bubbling up in scrobbles list."},
-        {version: '2019.02.23.0', description: "Update/fix for Collapse Top feature."},
-        {version: '2018.09.13.0', description: "Minor code optimizations."},
         {version: '2018.01.06.0', description: "Making the Linkify-feature optional."},
-        {version: '2017.12.13.0', description: "Fixing cover images in album-headers."},
         {version: '2017.10.26.1', description: "Now fully compatible with the upcoming Greasemonkey 4 WebExtension (Use webpage context-menu for options in GM4/Firefox)."},
         {version: '2017.08.07.0', description: "Separate links for short and long album titles ('Special Edition', 'Remastered' etc.)"},
         {version: '2017.08.01.1', description: "Moving development source to a GitHub repository: https://github.com/StigNygaard/Stigs_Last.fm_Album_Linkr"},
         {version: '2017.03.01.0', description: "Found a work-around to keep tapmusic collages working on secure https last.fm pages (https://carlo.zottmann.org/posts/2013/04/14/google-image-resizer.html)."},
-        {version: '2017.02.28.0', description: "Fix for loading album-icon on secure (https) last.fm pages."},
         {version: '2016.11.05.3', description: "Another bonus-feature added: Optionally embed album collage from http://www.tapmusic.net/lastfm on user's profiles (Enable it via menu in the userscript browser extension)."},
         {version: '2016.10.26.0', description: 'More intelligent creation of links in album-headers when there are featured artists on some albumtracks.'},
         {version: '2016.10.19.0', description: 'Bonus-feature added: Linkifying URLs written in About Me section in Profiles.'},
@@ -76,7 +74,6 @@ var linkr = linkr || {
     insertStyle: function() {
         if (!document.getElementById('linkrStyle')) {
             var style = document.createElement('style');
-            style.type = 'text/css';
             style.id = 'linkrStyle';
             style.innerHTML = '#tapmusic {font-style:italic; font-size:12px; color:rgb(153,153,153)} .tapcollage {line-height:1.5; animation:fadein 15s; animation-timing-function:ease-in;} .tapcredit{line-height:1.3} @keyframes fadein {from{color:rgba(153,153,153,0);} to{color:rgba(153,153,153,1);}} ' +
                               'tr.albumlink-row,  tr.albumlink-row > td {background-color:#f1cccc !important} tr.albumlink-row > td.chartlist-name {font-style:italic} tr.albumlink-row > td.chartlist-name > span > span {font-style:normal} tr.albumlink-row:hover, tr.albumlink-row:hover > td {background-color:#f9d4d4 !important;} .albumextension, .albumextension .link-block-target {font-style:italic; color:#707070 !important} ' +
@@ -210,8 +207,7 @@ var linkr = linkr || {
             if (l[i].alt && l[i].alt.trim()!=='') {
                 l[i].alt = l[i].alt.trim();
                 l[i].title = l[i].alt;
-                var parent = l[i].parentNode;
-                tr = parent;
+                tr = l[i].parentNode;
                 while (tr.tagName.toUpperCase()!=='TR') tr = tr.parentNode;
                 var a = tr.querySelector('span.chartlist-artists a');
                 if (a) {
@@ -320,7 +316,7 @@ var linkr = linkr || {
 
         // extras here...
         linkr.linkifySidebar();
-        linkr.tapmusicSidebar();
+        setTimeout(linkr.tapmusicSidebar, 100);
         linkr.linking_running = false;
     },
     setupObserver: function () {
@@ -396,4 +392,4 @@ var linkr = linkr || {
     }
 };
 
-linkr.init();
+window.addEventListener('pageshow', linkr.init, false);

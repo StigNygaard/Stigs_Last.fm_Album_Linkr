@@ -2,7 +2,7 @@
 // @name            Stig's Last.fm Album Linkr
 // @namespace       dk.rockland.userscript.lastfm.linkr
 // @description     Adding album links and headers to tracks on Last.Fm's recent plays listings - plus linkifying About Me section on profiles
-// @version         2019.07.08.0
+// @version         2019.07.08.1
 // @author          Stig Nygaard, http://www.rockland.dk
 // @homepageURL     http://www.rockland.dk/userscript/lastfm/linkr/
 // @supportURL      http://www.rockland.dk/userscript/lastfm/linkr/
@@ -174,7 +174,7 @@ var linkr = linkr || {
                             /^([^$]*[^-\s])(\s)([\(\[]EP[\)\]])$/i,
                             /^([^$]*[^-\s])(\s)([\(\[]Explicit[\)\]])$/i,
                             /^([^$]*[^-\s])(\s)(EP[\d\s]*)$/i
-            ];
+            ];  // ( ... bonus CD), (single),... ?
             for (var i=0; i<regs.length; i++) {
                 var m = title.match(regs[i]);
                 // 0: full (= basic+spacer+extension)

@@ -47,6 +47,7 @@
 var linkr = linkr || {
     // CHANGELOG - The most important updates/versions:
     changelog: [
+        {version: '2019.07.08.1', description: "Styling adjustments."},
         {version: '2019.07.08.0', description: "Adapting to last.fm's new scrobble list implementation."},
         {version: '2019.04.26.0', description: "Probably/hopefully fixing that tapmusic collage could delay loading of some other pageelements?"},
         {version: '2019.03.01.1', description: "Remove extra (mobile ad?) line bubbling up in scrobbles list."},
@@ -77,7 +78,7 @@ var linkr = linkr || {
             var style = document.createElement('style');
             style.id = 'linkrStyle';
             style.innerHTML = '#tapmusic {font-style:italic; font-size:12px; color:rgb(153,153,153)} .tapcollage {line-height:1.5; animation:fadein 15s; animation-timing-function:ease-in;} .tapcredit{line-height:1.3} @keyframes fadein {from{color:rgba(153,153,153,0);} to{color:rgba(153,153,153,1);}} ' +
-                              'tr.albumlink-row,  tr.albumlink-row > td {background-color:#f1cccc !important} tr.albumlink-row > td.chartlist-name {font-style:italic} tr.albumlink-row > td.chartlist-name > span > span {font-style:normal} tr.albumlink-row:hover, tr.albumlink-row:hover > td {background-color:#f9d4d4 !important;} .albumextension, .albumextension .link-block-target {font-style:italic; color:#707070 !important} ' +
+                              'tr.albumlink-row,  tr.albumlink-row > td {background-color:#fbe9e9 !important} tr.albumlink-row > td.chartlist-name {font-style:italic} tr.albumlink-row > td.chartlist-name > span > span {font-style:normal} tr.albumlink-row:hover, tr.albumlink-row:hover > td {background-color:#fadcdc !important;} .albumextension, .albumextension .link-block-target {font-style:italic; color:#707070 !important} ' +
                               'tr.chartlist-row--interlist-ad.open-ad-container-mobile {display:none !important} ' +
                               (linkr.collapseTop ? 'div[id^="gpt-slot-"], #leader_top {display:none}' : '');
             document.getElementsByTagName('head')[0].appendChild(style);
@@ -143,10 +144,6 @@ var linkr = linkr || {
                     return null;
                 } else if (albumImg) {
                     return albumImg.alt;
-                } else if (elem.firstElementChild.firstElementChild && elem.firstElementChild.firstElementChild.firstElementChild && elem.firstElementChild.firstElementChild.firstElementChild.firstElementChild) {
-                    return elem.firstElementChild.firstElementChild.firstElementChild.firstElementChild.alt;
-                } else if (elem.firstElementChild.firstElementChild && elem.firstElementChild.firstElementChild.firstElementChild) {
-                    return elem.firstElementChild.firstElementChild.firstElementChild.alt;
                 }
             }
             return null;

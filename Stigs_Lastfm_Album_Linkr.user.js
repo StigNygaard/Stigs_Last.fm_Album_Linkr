@@ -2,7 +2,7 @@
 // @name            Stig's Last.fm Album Linkr
 // @namespace       dk.rockland.userscript.lastfm.linkr
 // @description     Adding album links and headers to tracks on Last.Fm's recent plays listings - plus linkifying About Me section on profiles
-// @version         2019.07.08.1
+// @version         2019.07.10.0
 // @author          Stig Nygaard, http://www.rockland.dk
 // @homepageURL     http://www.rockland.dk/userscript/lastfm/linkr/
 // @supportURL      http://www.rockland.dk/userscript/lastfm/linkr/
@@ -47,8 +47,9 @@
 var linkr = linkr || {
     // CHANGELOG - The most important updates/versions:
     changelog: [
-        {version: '2019.07.08.1', description: "Styling adjustments."},
-        {version: '2019.07.08.0', description: "Adapting to last.fm's new scrobble list implementation."},
+        {version: '2019.07.10.0', description: "Trying to make initialization more reliable/robust."},
+        {version: '2019.07.08.1', description: "Minor styling adjustments."},
+        {version: '2019.07.08.0', description: "Adapting to last.fm's new scrobble list design and implementation."},
         {version: '2019.04.26.0', description: "Probably/hopefully fixing that tapmusic collage could delay loading of some other pageelements?"},
         {version: '2019.03.01.1', description: "Remove extra (mobile ad?) line bubbling up in scrobbles list."},
         {version: '2018.01.06.0', description: "Making the Linkify-feature optional."},
@@ -61,7 +62,7 @@ var linkr = linkr || {
         {version: '2016.10.19.0', description: 'Bonus-feature added: Linkifying URLs written in About Me section in Profiles.'},
         {version: '2016.07.04.0', description: '1st release.'}
     ],
-    INFO: false,
+    INFO: true,
     DEBUG: false,
     observed: null,
     linking_running: false,
@@ -220,7 +221,7 @@ var linkr = linkr || {
                                 altvalue(rows[i]) !== '' &&
                                 altvalue(rows[i]).toLowerCase() === altvalue(rows[i - 1]).toLowerCase() &&
                                 (i===1 || altvalue(rows[i]).toLowerCase() !== altvalue(rows[i - 2]).toLowerCase()) ) {
-                            linkr.log('for-loop. i=' + i + ' og vi har fundet en album-gruppes start', linkr.INFO);
+                            linkr.log('for-loop. i=' + i + ' og vi har fundet en album-gruppes start');
                             // TRY to get albumartist right even when misc. featured artists on album tracks:
                             var bestindex = i-1;
                             var artistlinkelem = rows[bestindex].querySelector('td.chartlist-artist > a');
@@ -344,20 +345,68 @@ var linkr = linkr || {
         }
     },
     init: function () {
-        linkr.log('Running init() on last.fm');
-        linkr.loadSettings();
-        linkr.setupObserver();
-        setInterval(linkr.setupObserver,2000);
-        GMC.registerMenuCommand("Album Collages - Disabled", linkr.collageOff, {accessKey: "D", type: "radio", name: 'collage', checked: (linkr.collagetype==='')});
-        GMC.registerMenuCommand("Album Collages - 7 Days", linkr.collage7day, {accessKey: "7", type: "radio", name: 'collage', checked: (linkr.collagetype==='7day')});
-        GMC.registerMenuCommand("Album Collages - 1 Month", linkr.collage1month, {accessKey: "1", type: "radio", name: 'collage', checked: (linkr.collagetype==='1month')});
-        GMC.registerMenuCommand("Album Collages - 3 Months", linkr.collage3month, {accessKey: "3", type: "radio", name: 'collage', checked: (linkr.collagetype==='3month')});
-        GMC.registerMenuCommand("Album Collages - 6 Months", linkr.collage6month, {accessKey: "6", type: "radio", name: 'collage', checked: (linkr.collagetype==='6month')});
-        GMC.registerMenuCommand("Album Collages - 1 Year", linkr.collage12month, {accessKey: "Y", type: "radio", name: 'collage', checked: (linkr.collagetype==='12month')});
-        GMC.registerMenuCommand("Album Collages - Overall", linkr.collageOverall, {accessKey: "O", type: "radio", name: 'collage', checked: (linkr.collagetype==='overall')});
-        GMC.registerMenuCommand("Linkify About Me section", linkr.toggleLinkifyEnabled , {accessKey: "L", type: "checkbox", checked: (linkr.linkifyEnabled)});
-        GMC.registerMenuCommand("Collapse the top", linkr.toggleCollapseTop , {accessKey: "C", type: "checkbox", checked: (linkr.collapseTop)});
+        linkr.log('Running init() on last.fm with readyState = ' + document.readyState, linkr.INFO);
+        if (!(linkr.observed && linkr.observed.classList && linkr.observed.classList.contains('hasObserver'))) {
+            linkr.loadSettings();
+            linkr.setupObserver();
+            setInterval(linkr.setupObserver, 2000);
+            GMC.registerMenuCommand("Album Collages - Disabled", linkr.collageOff, {
+                accessKey: "D",
+                type: "radio",
+                name: 'collage',
+                checked: (linkr.collagetype === '')
+            });
+            GMC.registerMenuCommand("Album Collages - 7 Days", linkr.collage7day, {
+                accessKey: "7",
+                type: "radio",
+                name: 'collage',
+                checked: (linkr.collagetype === '7day')
+            });
+            GMC.registerMenuCommand("Album Collages - 1 Month", linkr.collage1month, {
+                accessKey: "1",
+                type: "radio",
+                name: 'collage',
+                checked: (linkr.collagetype === '1month')
+            });
+            GMC.registerMenuCommand("Album Collages - 3 Months", linkr.collage3month, {
+                accessKey: "3",
+                type: "radio",
+                name: 'collage',
+                checked: (linkr.collagetype === '3month')
+            });
+            GMC.registerMenuCommand("Album Collages - 6 Months", linkr.collage6month, {
+                accessKey: "6",
+                type: "radio",
+                name: 'collage',
+                checked: (linkr.collagetype === '6month')
+            });
+            GMC.registerMenuCommand("Album Collages - 1 Year", linkr.collage12month, {
+                accessKey: "Y",
+                type: "radio",
+                name: 'collage',
+                checked: (linkr.collagetype === '12month')
+            });
+            GMC.registerMenuCommand("Album Collages - Overall", linkr.collageOverall, {
+                accessKey: "O",
+                type: "radio",
+                name: 'collage',
+                checked: (linkr.collagetype === 'overall')
+            });
+            GMC.registerMenuCommand("Linkify About Me section", linkr.toggleLinkifyEnabled, {
+                accessKey: "L",
+                type: "checkbox",
+                checked: (linkr.linkifyEnabled)
+            });
+            GMC.registerMenuCommand("Collapse the top", linkr.toggleCollapseTop, {
+                accessKey: "C",
+                type: "checkbox",
+                checked: (linkr.collapseTop)
+            });
+        }
     }
 };
 
+linkr.log('Userscript running at readyState: ' + document.readyState, linkr.INFO);
+window.addEventListener('DOMContentLoaded', linkr.init, false);
+// window.addEventListener('load', linkr.init, false);
 window.addEventListener('pageshow', linkr.init, false);

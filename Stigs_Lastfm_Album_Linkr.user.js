@@ -2,7 +2,7 @@
 // @name            Stig's Last.fm Album Linkr
 // @namespace       dk.rockland.userscript.lastfm.linkr
 // @description     Adding album links and headers to tracks on Last.Fm's recent plays listings - plus linkifying About Me section on profiles
-// @version         2019.07.10.0
+// @version         2019.10.19.0
 // @author          Stig Nygaard, http://www.rockland.dk
 // @homepageURL     http://www.rockland.dk/userscript/lastfm/linkr/
 // @supportURL      http://www.rockland.dk/userscript/lastfm/linkr/
@@ -47,8 +47,7 @@
 var linkr = linkr || {
     // CHANGELOG - The most important updates/versions:
     changelog: [
-        {version: '2019.07.10.0', description: "Trying to make initialization more reliable/robust."},
-        {version: '2019.07.08.1', description: "Minor styling adjustments."},
+        {version: '2019.10.19.0', description: "Fix for an error happening when live scrobbling a track without cover art."},
         {version: '2019.07.08.0', description: "Adapting to last.fm's new scrobble list design and implementation."},
         {version: '2019.04.26.0', description: "Probably/hopefully fixing that tapmusic collage could delay loading of some other pageelements?"},
         {version: '2019.03.01.1', description: "Remove extra (mobile ad?) line bubbling up in scrobbles list."},
@@ -85,7 +84,7 @@ var linkr = linkr || {
             document.getElementsByTagName('head')[0].appendChild(style);
             linkr.log('linkrStyle has been ADDED');
         } else {
-            linkr.log('linkrStyle was already present');
+            // linkr.log('linkrStyle was already present');
         }
     },
     loadSettings: function() {
@@ -136,14 +135,18 @@ var linkr = linkr || {
         linkr.saveSettings();
     },
     linking: function (mutations) {
-        if(linkr.linking_running) return;
+        linkr.log('Entering linking function...', linkr.INFO);
+        if(linkr.linking_running) {
+            linkr.log('EXIT linking function, because already running!...', linkr.INFO);
+            return;
+        }
         linkr.linking_running = true;
         function altvalue(elem) {
             if (elem && elem.firstElementChild) {
                 let albumImg = elem.querySelector('td.chartlist-image > a.cover-art > img');
                 if (elem.classList.contains('albumlink-row') || elem.firstElementChild.classList.contains('albumlink-row')) {
                     return null;
-                } else if (albumImg) {
+                } else if (albumImg && albumImg.alt) {
                     return albumImg.alt;
                 }
             }
@@ -216,11 +219,15 @@ var linkr = linkr || {
                     linkr.log('for-loop. i=' + i);
                     if (i===1 || !rows[i - 2].classList.contains('albumlink-row')) {
                         linkr.log('for-loop. i=' + i + ' og i-2 er IKKE allerede albumlink-row');
+                        if (i==2) { // for i=2, extra logging...
+                            linkr.log('for-loop. altvalue(rows[i])=' + altvalue(rows[i]));
+                            linkr.log('for-loop. altvalue(rows[i-1])=' + altvalue(rows[i-1]));
+                            linkr.log('for-loop. altvalue(rows[i-2])=' + altvalue(rows[i-2]));
+                        }
                         if (    altvalue(rows[i]) &&
                                 altvalue(rows[i - 1]) &&
-                                altvalue(rows[i]) !== '' &&
                                 altvalue(rows[i]).toLowerCase() === altvalue(rows[i - 1]).toLowerCase() &&
-                                (i===1 || altvalue(rows[i]).toLowerCase() !== altvalue(rows[i - 2]).toLowerCase()) ) {
+                                (i===1 || altvalue(rows[i - 2]) === null || altvalue(rows[i]).toLowerCase() !== altvalue(rows[i - 2]).toLowerCase()) ) {
                             linkr.log('for-loop. i=' + i + ' og vi har fundet en album-gruppes start');
                             // TRY to get albumartist right even when misc. featured artists on album tracks:
                             var bestindex = i-1;
@@ -282,28 +289,31 @@ var linkr = linkr || {
                 linkr.log('but not enough children found...');
             }
         }
-
+        linkr.log('linking function about to run linkify and sidebar...');
         // extras here...
         linkr.linkifySidebar();
         setTimeout(linkr.tapmusicSidebar, 100);
+        linkr.log('Natural exit from linking function...', linkr.INFO);
         linkr.linking_running = false;
     },
     setupObserver: function () {
-        linkr.log('Running setupObserver()');
+        // linkr.log('Running setupObserver()');
         linkr.insertStyle();
         linkr.observed = document.querySelector('table.chartlist > tbody');
         if (!linkr.observed || !linkr.observed.classList) {
             linkr.log('Object to observe NOT found - re-trying later...');
         } else if (linkr.observed.classList.contains('hasObserver')) {
-            linkr.log('Everything is okay! - But checking again later...');
+            // linkr.log('Everything is okay! - But checking again later...');
         } else {
             linkr.linking();
-            linkr.log('Now adding Observer and starting...', linkr.INFO);
+            linkr.log('Now creating Observer...', linkr.INFO);
             var observer = new MutationObserver(linkr.linking);
             var config = {attributes: false, childList: true, subtree: false, characterData: false};
+            linkr.log('Now starting Observer...', linkr.INFO);
             observer.observe(linkr.observed, config);
-            linkr.observed.classList.add('hasObserver');
             linkr.log('Observer added and running...');
+            linkr.observed.classList.add('hasObserver');
+            linkr.log('hasObserver class added...', linkr.INFO);
         }
     },
     linkifyStr: function (str, attributes) {

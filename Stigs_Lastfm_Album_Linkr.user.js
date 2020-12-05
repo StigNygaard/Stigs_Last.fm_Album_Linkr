@@ -2,10 +2,10 @@
 // @name            Stig's Last.fm Album Linkr
 // @namespace       dk.rockland.userscript.lastfm.linkr
 // @description     Adding album links and headers to tracks on Last.Fm's recent plays listings - plus linkifying About Me section on profiles
-// @version         2019.10.19.0
-// @author          Stig Nygaard, http://www.rockland.dk
-// @homepageURL     http://www.rockland.dk/userscript/lastfm/linkr/
-// @supportURL      http://www.rockland.dk/userscript/lastfm/linkr/
+// @version         2020.12.05.1
+// @author          Stig Nygaard, https://www.rockland.dk
+// @homepageURL     https://www.rockland.dk/userscript/lastfm/linkr/
+// @supportURL      https://www.rockland.dk/userscript/lastfm/linkr/
 // @match           *://*.last.fm/*
 // @match           *://*.lastfm.de/*
 // @match           *://*.lastfm.es/*
@@ -24,7 +24,7 @@
 // @grant           GM_getValue
 // @grant           GM_setValue
 // @run-at          document-start
-// @resource        albumIcon https://images1-focus-opensocial.googleusercontent.com/gadgets/proxy?url=http%3A%2F%2Fwww.rockland.dk%2Fimg%2Falbum244c.png&container=focus&resize_w=24&rewriteMime=image%2fpng&refresh=50000
+// @resource        albumIcon https://www.rockland.dk/img/album244c.png
 // @require         https://greasyfork.org/scripts/34527/code/GMCommonAPI.js?version=237846
 // @noframes
 // ==/UserScript==
@@ -47,6 +47,7 @@
 var linkr = linkr || {
     // CHANGELOG - The most important updates/versions:
     changelog: [
+        {version: '2020.12.05.0', description: "Stop using Google Image cache/proxy/resizer. It should not be necessary anymore."},
         {version: '2019.10.19.0', description: "Fix for an error happening when live scrobbling a track without cover art."},
         {version: '2019.07.08.0', description: "Adapting to last.fm's new scrobble list design and implementation."},
         {version: '2019.04.26.0', description: "Probably/hopefully fixing that tapmusic collage could delay loading of some other pageelements?"},
@@ -219,7 +220,7 @@ var linkr = linkr || {
                     linkr.log('for-loop. i=' + i);
                     if (i===1 || !rows[i - 2].classList.contains('albumlink-row')) {
                         linkr.log('for-loop. i=' + i + ' og i-2 er IKKE allerede albumlink-row');
-                        if (i==2) { // for i=2, extra logging...
+                        if (i===2) { // for i=2, extra logging...
                             linkr.log('for-loop. altvalue(rows[i])=' + altvalue(rows[i]));
                             linkr.log('for-loop. altvalue(rows[i-1])=' + altvalue(rows[i-1]));
                             linkr.log('for-loop. altvalue(rows[i-2])=' + altvalue(rows[i-2]));
@@ -347,7 +348,10 @@ var linkr = linkr || {
                 linkr.log('tapmusicSidebar(): url match med userid=' + result[1]);
                 var b = document.querySelector('.stationlinks');
                 if (b && !document.getElementById('tapmusic')) {
-                    b.insertAdjacentHTML('beforeend', '<div style="margin:1em 0;width:300px" id="tapmusic"><div class="tapcollage"><img src="https://images1-focus-opensocial.googleusercontent.com/gadgets/proxy?url=http%3A%2F%2Fwww.tapmusic.net%2Fcollage.php%3Fuser%3D' + result[1] + '%26type%3D'+linkr.collagetype+'%26size%3D2x6&container=focus&resize_w=300&refresh=3600" alt="If this text is visible, tapmusic.net might be slow or not responding - or the profile you are looking at does not have recent scrobbles to generate a collage from... But sometimes a simple re-load of page also helps." style="display:block;margin:0;padding:0;width:300px;height:900px" decoding="async" /></div><div class="tapcredit"><em title="Album collage by www.tapmusic.net/lastfm - Embedded by Stig\'s Last.fm Album Linkr">Album collage by <a href="http://www.tapmusic.net/lastfm/">www.tapmusic.net/lastfm/</a></em></div></div>');
+                    // Via google cache:
+                    // b.insertAdjacentHTML('beforeend', '<div style="margin:1em 0;width:300px" id="tapmusic"><div class="tapcollage"><img src="https://images1-focus-opensocial.googleusercontent.com/gadgets/proxy?url=https%3A%2F%2Fwww.tapmusic.net%2Fcollage.php%3Fuser%3D' + result[1] + '%26type%3D'+linkr.collagetype+'%26size%3D2x6&container=focus&resize_w=300&refresh=3600" alt="If this text is visible, tapmusic.net might be slow or not responding - or the profile you are looking at does not have recent scrobbles to generate a collage from... But sometimes a simple re-load of page also helps." style="display:block;margin:0;padding:0;width:300px;height:900px" decoding="async" /></div><div class="tapcredit"><em title="Album collage by www.tapmusic.net/lastfm - Embedded by Stig\'s Last.fm Album Linkr">Album collage by <a href="http://www.tapmusic.net/lastfm/">www.tapmusic.net/lastfm/</a></em></div></div>');
+                    // Directly from tapmusic:
+                    b.insertAdjacentHTML('beforeend', '<div style="margin:1em 0;width:300px" id="tapmusic"><div class="tapcollage"><img src="https://www.tapmusic.net/collage.php?user=' + result[1] + '&type='+linkr.collagetype+'&size=2x6" alt="If this text is visible, tapmusic.net might be slow or not responding - or the profile you are looking at does not have recent scrobbles to generate a collage from... But sometimes a simple re-load of page also helps." style="display:block;margin:0;padding:0;width:300px;height:900px" decoding="async" /></div><div class="tapcredit"><em title="Album collage by www.tapmusic.net/lastfm - Embedded by Stig\'s Last.fm Album Linkr">Album collage by <a href="http://www.tapmusic.net/lastfm/">www.tapmusic.net/lastfm/</a></em></div></div>');
                 }
             } else {
                 linkr.log('tapmusicSidebar(): returnerer false! reg-pattern fandt ikke match i pathname=' + window.location.pathname);

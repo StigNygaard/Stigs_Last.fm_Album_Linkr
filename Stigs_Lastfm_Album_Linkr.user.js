@@ -2,7 +2,7 @@
 // @name            Stig's Last.fm Album Linkr
 // @namespace       dk.rockland.userscript.lastfm.linkr
 // @description     Adding album links and headers to tracks on Last.Fm's recent plays listings - plus linkifying About Me section on profiles
-// @version         2020.12.05.1
+// @version         2020.12.05.2
 // @author          Stig Nygaard, https://www.rockland.dk
 // @homepageURL     https://www.rockland.dk/userscript/lastfm/linkr/
 // @supportURL      https://www.rockland.dk/userscript/lastfm/linkr/
@@ -351,7 +351,7 @@ var linkr = linkr || {
                     // Via google cache:
                     // b.insertAdjacentHTML('beforeend', '<div style="margin:1em 0;width:300px" id="tapmusic"><div class="tapcollage"><img src="https://images1-focus-opensocial.googleusercontent.com/gadgets/proxy?url=https%3A%2F%2Fwww.tapmusic.net%2Fcollage.php%3Fuser%3D' + result[1] + '%26type%3D'+linkr.collagetype+'%26size%3D2x6&container=focus&resize_w=300&refresh=3600" alt="If this text is visible, tapmusic.net might be slow or not responding - or the profile you are looking at does not have recent scrobbles to generate a collage from... But sometimes a simple re-load of page also helps." style="display:block;margin:0;padding:0;width:300px;height:900px" decoding="async" /></div><div class="tapcredit"><em title="Album collage by www.tapmusic.net/lastfm - Embedded by Stig\'s Last.fm Album Linkr">Album collage by <a href="http://www.tapmusic.net/lastfm/">www.tapmusic.net/lastfm/</a></em></div></div>');
                     // Directly from tapmusic:
-                    b.insertAdjacentHTML('beforeend', '<div style="margin:1em 0;width:300px" id="tapmusic"><div class="tapcollage"><img src="https://www.tapmusic.net/collage.php?user=' + result[1] + '&type='+linkr.collagetype+'&size=2x6" alt="If this text is visible, tapmusic.net might be slow or not responding - or the profile you are looking at does not have recent scrobbles to generate a collage from... But sometimes a simple re-load of page also helps." style="display:block;margin:0;padding:0;width:300px;height:900px" decoding="async" /></div><div class="tapcredit"><em title="Album collage by www.tapmusic.net/lastfm - Embedded by Stig\'s Last.fm Album Linkr">Album collage by <a href="http://www.tapmusic.net/lastfm/">www.tapmusic.net/lastfm/</a></em></div></div>');
+                    b.insertAdjacentHTML('beforeend', '<div style="margin:1em 0;width:300px" id="tapmusic"><div class="tapcollage"><img src="https://www.tapmusic.net/collage.php?user=' + result[1] + '&type='+linkr.collagetype+'&size=2x6" alt="If this text is visible, tapmusic.net might be slow or not responding - or the profile you are looking at does not have recent scrobbles to generate a collage from... But sometimes a simple re-load of page also helps." style="display:block;margin:0;padding:0;width:300px;height:900px" decoding="async" /></div><div class="tapcredit"><em title="Album collage by www.tapmusic.net/lastfm - Embedded by Stig\'s Last.fm Album Linkr">Album collage by <a href="https://www.tapmusic.net/lastfm/?utm_source=https%3A%2F%2Fgreasyfork.org%2Fscripts%2F21153">www.tapmusic.net/lastfm/</a></em></div></div>');
                 }
             } else {
                 linkr.log('tapmusicSidebar(): returnerer false! reg-pattern fandt ikke match i pathname=' + window.location.pathname);

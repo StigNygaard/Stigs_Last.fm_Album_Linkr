@@ -2,7 +2,7 @@
 // @name            Stig's Last.fm Album Linkr
 // @namespace       dk.rockland.userscript.lastfm.linkr
 // @description     Adding album links and headers to tracks on Last.Fm's recent plays listings - plus linkifying About Me section on profiles
-// @version         2020.12.05.2
+// @version         2021.01.29.0
 // @author          Stig Nygaard, https://www.rockland.dk
 // @homepageURL     https://www.rockland.dk/userscript/lastfm/linkr/
 // @supportURL      https://www.rockland.dk/userscript/lastfm/linkr/
@@ -18,6 +18,7 @@
 // @match           *://*.lastfm.sv/*
 // @match           *://*.lastfm.tr/*
 // @match           *://*.lastfm.zh/*
+// @grant           GM.registerMenuCommand
 // @grant           GM_registerMenuCommand
 // @grant           GM.getResourceUrl
 // @grant           GM_getResourceURL
@@ -37,16 +38,12 @@
  *      https://github.com/StigNygaard/Stigs_Last.fm_Album_Linkr
  *      https://www.last.fm/user/rockland
  *
- *      Should work with all popular browsers and userscript managers. Compatibility with the new
- *      Greasemonkey 4 WebExtension and Firefox 57+ is done with the help of GM Common Library:
- *
- *      https://github.com/StigNygaard/GMCommonAPI.js
- *      https://greasyfork.org/scripts/34527-gmcommonapi-js
  */
 
 var linkr = linkr || {
     // CHANGELOG - The most important updates/versions:
     changelog: [
+        {version: '2021.01.29.0', description: "Support the native GM.registerMenuCommand command introduced in GM4.11."},
         {version: '2020.12.05.0', description: "Stop using Google Image cache/proxy/resizer. It should not be necessary anymore."},
         {version: '2019.10.19.0', description: "Fix for an error happening when live scrobbling a track without cover art."},
         {version: '2019.07.08.0', description: "Adapting to last.fm's new scrobble list design and implementation."},

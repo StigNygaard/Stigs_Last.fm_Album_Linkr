@@ -158,25 +158,42 @@ var linkr = linkr || {
         }
         function splitAlbumTitle(title) {
             title = title.trim();
-            var rtval = {full:title, basic:title};
-            var regs =  [
-                            /^([^$]*[^-\s])(\s-\s)(\w[\w\s]+\sEdition[\w\s]*)$/i,
-                            /^([^$]*[^-\s])(\s-\s)(\w[\w\s]+\sVersion[\w\s]*)$/i,
-                            /^([^$]*[^-\s])(\s-\s)(\w[\w\s]+\sDeluxe[\w\s]*)$/i,
-                            /^([^$]*[^-\s])(\s-\s)(\w[\w\s]+\sRemaster[\w\s]*)$/i,
-                            /^([^$]*[^-\s])(\s-\s)(Deluxe[\w\s]*)$/i,
-                            /^([^$]*[^-\s])(\s-\s)(Remaster[\w\s]*)$/i,
-                            /^([^$]*[^-\s])(\s-\s)(EP[\w\s]*)$/i,
-                            /^([^$]*[^-\s])(\s-\s)(Explicit[\w\s]*)$/i,
-                            /^([^$]*[^-\s])(\s)([\(\[][\w\s]+\sEdition[\w\s]*[\)\]])$/i,
-                            /^([^$]*[^-\s])(\s)([\(\[][\w\s]+\sVersion[\w\s]*[\)\]])$/i,
-                            /^([^$]*[^-\s])(\s)([\(\[][\w\s]+\sDeluxe[\w\s]*[\)\]])$/i,
-                            /^([^$]*[^-\s])(\s)([\(\[][\w\s]+\sRemaster[\w\s]*[\)\]])$/i,
-                            /^([^$]*[^-\s])(\s)([\(\[]Deluxe[\w\s]*[\)\]])$/i,
-                            /^([^$]*[^-\s])(\s)([\(\[]Remaster[\w\s]*[\)\]])$/i,
-                            /^([^$]*[^-\s])(\s)([\(\[]EP[\)\]])$/i,
-                            /^([^$]*[^-\s])(\s)([\(\[]Explicit[\)\]])$/i,
-                            /^([^$]*[^-\s])(\s)(EP[\d\s]*)$/i
+            let rtval = {full:title, basic:title};
+            let regs =  [
+                /^(.+[^-\s])(\s+-\s+)(\w[\w\s]+\sEdition[\w\s]*)$/i,
+                /^(.+[^-\s])(\s+-\s+)(\w[\w\s]+\sVersion[\w\s]*)$/i,
+                /^(.+[^-\s])(\s+-\s+)(\w[\w\s]+\sDeluxe[\w\s]*)$/i,
+                /^(.+[^-\s])(\s+-\s+)(\w[\w\s]+\sRemaster[\w\s]*)$/i,
+                /^(.+[^-\s])(\s+-\s+)(\w[\w\s]+\sDisc[\w\s]*)$/i,
+                /^(.+[^-\s])(\s+-\s+)(\w[\w\s]+\sCD[\w\s]*)$/i,
+                /^(.+[^-\s])(\s+-\s+)(Deluxe[\w\s]*)$/i,
+                /^(.+[^-\s])(\s+-\s+)(Super[\w\s]*)$/i,
+                /^(.+[^-\s])(\s+-\s+)(Remaster[\w\s]*)$/i,
+                /^(.+[^-\s])(\s+-\s+)(Music from[\w\s]*)$/i,
+                /^(.+[^-\s])(\s+-\s+)(EP[\w\s]*)$/i,
+                /^(.+[^-\s])(\s+-\s+)(Live[\w\s]*)$/i,
+                /^(.+[^-\s])(\s+-\s+)(single[\w\s]*)$/i,
+                /^(.+[^-\s])(\s+-\s+)(Explicit[\w\s]*)$/i,
+                /^(.+[^-\s])(\s+-\s+)(Disc\s[\w\s]+)$/i,
+                /^(.+[^-\s])(\s+-\s+)(CD\s[\w\s]+)$/i,
+                /^(.+[^-\s])(\s+)([([][\w\s]+\sEdition[\w\s]*[)\]])$/i,
+                /^(.+[^-\s])(\s+)([([][\w\s]+\sVersion[\w\s]*[)\]])$/i,
+                /^(.+[^-\s])(\s+)([([][\w\s]+\sDeluxe[\w\s]*[)\]])$/i,
+                /^(.+[^-\s])(\s+)([([][\w\s]+\sSuper[\w\s]*[)\]])$/i,
+                /^(.+[^-\s])(\s+)([([][\w\s]+\sRemaster[\w\s]*[)\]])$/i,
+                /^(.+[^-\s])(\s+)([([][\w\s]+\sDisc[\w\s]*[)\]])$/i,
+                /^(.+[^-\s])(\s+)([([][\w\s]+\sCD[\w\s]*[)\]])$/i,
+                /^(.+[^-\s])(\s+)([([]Deluxe[\w\s]*[)\]])$/i,
+                /^(.+[^-\s])(\s+)([([]Super[\w\s]*[)\]])$/i,
+                /^(.+[^-\s])(\s+)([([]Remaster[\w\s]*[)\]])$/i,
+                /^(.+[^-\s])(\s+)([([]Music from[\w\s]*[)\]])$/i,
+                /^(.+[^-\s])(\s+)([([]EP[)\]])$/i,
+                /^(.+[^-\s])(\s+)([([]Live[)\]])$/i,
+                /^(.+[^-\s])(\s+)([([]single[)\]])$/i,
+                /^(.+[^-\s])(\s+)([([]Explicit[)\]])$/i,
+                /^(.+[^-\s])(\s+)([([]Disc\s[\w\s]+[)\]])$/i,
+                /^(.+[^-\s])(\s+)([([]CD\s[\w\s]+[)\]])$/i,
+                /^(.+[^-\s])(\s+)(EP[\d\s]*)$/i
             ];  // ( ... bonus CD), (single),... ?
             for (var i=0; i<regs.length; i++) {
                 var m = title.match(regs[i]);

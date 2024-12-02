@@ -386,6 +386,36 @@ var linkr = linkr || {
             }
         }
     },
+    boarding: function() {
+        if (GMC.info?.script?.version) {
+            const box = document.createElement('dialog');
+            if (box?.showModal && GMC.info.script.version !== GMC.getValue('boardingversion')) {
+                box.innerHTML =
+                    `
+                <style>dialog {background-color: #fff9e5; max-width: 60dvw; font-family: sans-serif} dialog button {background-color: #fff9e5; padding: 2px 4px; margin-top: .7em; border: 2px solid #000}</style>
+                <p>You are now using userscript (GMScript)
+                <strong><em><a href="https://greasyfork.org/scripts/21153-stig-s-last-fm-album-linkr" target="_blank">Stig's Last.fm Album Linkr</a></em>
+                version <em>${GMC.info.script.version}</em></strong>. It is the first update of this script in
+                nearly 4 years! This version primarily improves detection and handling of "extended" album-titles.</p>
+                <p>Do you like the red album-headers that <em>Album Linkr</em> adds to playlists on the Last.fm site?
+                If you have a homepage/blog in need of a "scrobbles widget", you might want to take a look at
+                <strong><em><a href="https://lastfm-widgets.deno.dev/" target="_blank">Tracks</a></em></strong>
+                 - a new web-widget I have created that should work on most websites. And it also (optionally)
+                 features red album-headers🙂</p>
+                <p>This message should normally only be shown once.</p>
+                <button autofocus>Close</button>
+                `;
+                document.body.appendChild(box);
+                GMC.setValue('boardingversion', GMC.info.script.version);
+                box.showModal();
+                box.addEventListener('click', (ev) => {
+                    ev.stopPropagation();
+                    ev.preventDefault();
+                    box.close();
+                });
+            }
+        }
+    },
     init: function () {
         linkr.log('Running init() on last.fm with readyState = ' + document.readyState, linkr.INFO);
         if (!(linkr.observed?.classList?.contains('hasObserver'))) {
@@ -444,6 +474,8 @@ var linkr = linkr || {
                 type: "checkbox",
                 checked: (linkr.collapseTop)
             });
+
+            linkr.boarding();
         }
     }
 };

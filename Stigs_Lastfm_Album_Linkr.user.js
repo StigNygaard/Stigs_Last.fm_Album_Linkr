@@ -2,7 +2,7 @@
 // @name            Stig's Last.fm Album Linkr
 // @namespace       dk.rockland.userscript.lastfm.linkr
 // @description     Adding album links and headers to tracks on Last.Fm's recent plays listings - plus linkifying About Me section on profiles
-// @version         2024.12.00.0
+// @version         2024.12.02.0
 // @author          Stig Nygaard, https://www.rockland.dk
 // @homepageURL     https://www.rockland.dk/userscript/lastfm/linkr/
 // @supportURL      https://www.rockland.dk/userscript/lastfm/linkr/
@@ -43,7 +43,7 @@
 var linkr = linkr || {
     // CHANGELOG - The most important updates/versions:
     changelog: [
-        {version: '2024.12.00.0', description: "Improve splitting album titles (detect title-extensions like 'Special Edition' etc)"},
+        {version: '2024.12.02.0', description: "Improve splitting album titles (detect title-extensions like 'Special Edition' etc)"},
         {version: '2021.03.24.0', description: "Certificate error embedding from www.tapmusic.net (album collage), but changing to tapmusic.net seems to fix it."},
         {version: '2021.01.29.0', description: "Support the native GM.registerMenuCommand command introduced in GM4.11."},
         {version: '2020.12.05.0', description: "Stop using Google Image cache/proxy/resizer. It should not be necessary anymore."},
